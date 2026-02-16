@@ -1,0 +1,39 @@
+{
+  "name": "bondify",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/geolocation": "^8.0.0",
+    "@capacitor/ios": "^8.0.1",
+    "@google/genai": "^0.2.0",
+    "axios": "^1.13.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.6.0",
+    "leaflet": "1.9.4",
+    "lucide-react": "0.454.0",
+    "mongoose": "^8.9.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-leaflet": "4.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/cli": "^8.0.1",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "sharp": "^0.34.5",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

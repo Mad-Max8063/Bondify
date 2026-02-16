@@ -1,0 +1,7 @@
+{
+  "name": "Bondify",
+  "description": "Una aplicación comunitaria de transporte público para Buenos Aires que distingue entre datos oficiales y verificados por usuarios para evitar el 'bondi fantasma'.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
