@@ -36,16 +36,18 @@ npm run dev
 
 ## 📦 Variables de Entorno
 
-| Variable | Descripción |
-|----------|-------------|
-| `VITE_BACKEND_URL` | URL del backend API |
+| Variable | Descripción | Dónde obtenerla |
+|----------|-------------|-----------------|
+| `VITE_BACKEND_URL` | URL del backend API | `http://localhost:8001` para dev |
+| `GEMINI_API_KEY` | API Key de Google Gemini (gratis) | [Google AI Studio](https://aistudio.google.com/apikey) |
+| `VITE_MAP_PROVIDER` | Proveedor de mapas | `openstreetmap` (gratis, default) |
 
 ## 🛠️ Stack Tecnológico
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Mapas**: Leaflet + React-Leaflet
 - **UI**: Tailwind CSS + Lucide Icons
-- **AI**: Google Gemini API
+- **AI**: Google Gemini API (gratis via AI Studio)
 - **PWA**: Service Worker + Web App Manifest
 
 ## 📱 Instalación como App
@@ -68,18 +70,15 @@ Las contribuciones son bienvenidas. Por favor:
 
 MIT - Matias Maximiliano Bernal
 
-## ☁️ Despliegue en Emergent (Single-Service Monolith)
+## ☁️ Despliegue (Single-Service Monolith)
 Esta aplicación está configurada para desplegarse como un único servicio que incluye Frontend y Backend.
 
-1. **Crear Servicio** en Emergent conectado al repositorio.
-2. **Configuración**:
-   - **Root Directory**: `.` (vacío/raíz)
-   - **Build Command**: `npm run build`
-   - **Start Command**: `npm start`
+1. **Build Command**: `npm run build`
+2. **Start Command**: `npm start`
 3. **Variables de Entorno**:
    - `PORT`: `8001` (o por defecto)
-   - `VITE_BACKEND_URL`: `https://tu-app.emergent.sh` (o dejar vacío si es el mismo dominio)
-   - `GEMINI_API_KEY`: Tu API Key
+   - `VITE_BACKEND_URL`: URL de tu app en producción
+   - `GEMINI_API_KEY`: Tu API Key de [Google AI Studio](https://aistudio.google.com/apikey)
    - `VITE_MAP_PROVIDER`: `openstreetmap`
 
 ---

@@ -86,11 +86,11 @@
 
 ### Variables de Entorno
 
-**Backend** (`/app/server/.env`):
+**Backend** (`server/.env` — copiar de `server/.env.example`):
 ```
-# (Firebase Admin SDK credenciales usadas en server/firebase.js)
-PORT=3001
-GEMINI_API_KEY=your_api_key_here
+PORT=8001
+GEMINI_API_KEY=tu_key_de_google_ai_studio
+# Obtener en: https://aistudio.google.com/apikey
 ```
 
 **Frontend** (`/app/.env.local`):
