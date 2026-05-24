@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Clock, Users, AlertOctagon, Navigation, X, ThumbsUp } from 'lucide-react';
 import { reportesAPI } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Obtener userId del localStorage
 const getUserId = () => {
@@ -12,20 +13,69 @@ interface WazeReportButtonProps {
 }
 
 export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCreated }) => {
+  const { language } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [comentario, setComentario] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportTypes = [
-    { id: 'lleno', icon: '🚌', label: 'Colectivo lleno', color: 'bg-red-500', description: 'No hay lugar' },
-    { id: 'vacio', icon: '✅', label: 'Colectivo vacío', color: 'bg-green-500', description: 'Hay mucho lugar' },
-    { id: 'demora', icon: '⏰', label: 'Gran demora', color: 'bg-orange-500', description: 'Mucho tráfico/espera' },
-    { id: 'accidente', icon: '💥', label: 'Accidente', color: 'bg-red-600', description: 'Choque o accidente' },
-    { id: 'piquete', icon: '🚧', label: 'Corte/Piquete', color: 'bg-yellow-600', description: 'Calle cortada' },
-    { id: 'inseguridad', icon: '⚠️', label: 'Zona insegura', color: 'bg-purple-600', description: 'Ten precaución' },
-    { id: 'fantasma', icon: '👻', label: 'Bondi fantasma', color: 'bg-gray-600', description: 'No llegó el colectivo' },
-    { id: 'desvio', icon: '↪️', label: 'Desvío', color: 'bg-blue-500', description: 'Cambió de ruta' }
+    { 
+      id: 'lleno', 
+      icon: '🚌', 
+      label: language === 'es' ? 'Colectivo lleno' : 'Full bus', 
+      color: 'bg-red-500', 
+      description: language === 'es' ? 'No hay lugar' : 'No seats/room left' 
+    },
+    { 
+      id: 'vacio', 
+      icon: '✅', 
+      label: language === 'es' ? 'Colectivo vacío' : 'Empty bus', 
+      color: 'bg-green-500', 
+      description: language === 'es' ? 'Hay mucho lugar' : 'Plenty of seats/room' 
+    },
+    { 
+      id: 'demora', 
+      icon: '⏰', 
+      label: language === 'es' ? 'Gran demora' : 'Heavy delay', 
+      color: 'bg-orange-500', 
+      description: language === 'es' ? 'Mucho tráfico/espera' : 'Heavy traffic/long wait' 
+    },
+    { 
+      id: 'accidente', 
+      icon: '💥', 
+      label: language === 'es' ? 'Accidente' : 'Accident', 
+      color: 'bg-red-600', 
+      description: language === 'es' ? 'Choque o accidente' : 'Collision or crash' 
+    },
+    { 
+      id: 'piquete', 
+      icon: '🚧', 
+      label: language === 'es' ? 'Corte/Piquete' : 'Protest / Roadblock', 
+      color: 'bg-yellow-600', 
+      description: language === 'es' ? 'Calle cortada' : 'Street blocked' 
+    },
+    { 
+      id: 'inseguridad', 
+      icon: '⚠️', 
+      label: language === 'es' ? 'Zona insegura' : 'Unsafe area', 
+      color: 'bg-purple-600', 
+      description: language === 'es' ? 'Ten precaución' : 'Use caution' 
+    },
+    { 
+      id: 'fantasma', 
+      icon: '👻', 
+      label: language === 'es' ? 'Bondi fantasma' : 'Ghost bus', 
+      color: 'bg-gray-600', 
+      description: language === 'es' ? 'No llegó el colectivo' : 'Bus did not arrive' 
+    },
+    { 
+      id: 'desvio', 
+      icon: '↪️', 
+      label: language === 'es' ? 'Desvío' : 'Route Detour', 
+      color: 'bg-blue-500', 
+      description: language === 'es' ? 'Cambió de ruta' : 'Detoured route' 
+    }
   ];
 
   const handleSubmitReport = async () => {
@@ -34,7 +84,6 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
     setIsSubmitting(true);
     
     const report = reportTypes.find(r => r.id === selectedType);
-    const textoReporte = `${report?.label}: ${comentario || 'Sin comentarios'}`;
 
     try {
       const userId = getUserId();
@@ -53,9 +102,15 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
       const requiereConfirmacion = tiposConfirmacion.includes(selectedType);
       
       if (requiereConfirmacion) {
-        alert(`⏳ ¡Reporte enviado! Necesita 3 confirmaciones de otros pasajeros de la línea para hacerse público.\n\n🔒 Por seguridad, los reportes de "${report?.label}" requieren validación comunitaria.`);
+        const msg = language === 'es'
+          ? `⏳ ¡Reporte enviado! Necesita 3 confirmaciones de otros pasajeros de la línea para hacerse público.\n\n🔒 Por seguridad, los reportes de "${report?.label}" requieren validación comunitaria.`
+          : `⏳ Report submitted! Requires 3 confirmations from other active riders to go public.\n\n🔒 For safety, reports of "${report?.label}" require community validation.`;
+        alert(msg);
       } else {
-        alert(`✅ ¡Muchas gracias! Tu reporte ya está visible para todos los usuarios en el mapa en tiempo real.`);
+        const msg = language === 'es'
+          ? `✅ ¡Muchas gracias! Tu reporte ya está visible para todos los usuarios en el mapa en tiempo real.`
+          : `✅ Thank you! Your report is now live on the map for all riders in real-time.`;
+        alert(msg);
       }
       
       setShowMenu(false);
@@ -65,7 +120,8 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
       if (onReportCreated) onReportCreated();
     } catch (error) {
       console.error('Error enviando reporte:', error);
-      alert('❌ Error enviando reporte. Intenta de nuevo.');
+      const msg = language === 'es' ? '❌ Error enviando reporte. Intenta de nuevo.' : '❌ Error submitting report. Please try again.';
+      alert(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,8 +149,12 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
                 ⚠️
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Reportar Incidente</h2>
-                <p className="text-sm text-orange-100/90 font-medium">Ayudá a la comunidad en vivo</p>
+                <h2 className="text-2xl font-bold">
+                  {language === 'es' ? 'Reportar Incidente' : 'Report Incident'}
+                </h2>
+                <p className="text-sm text-orange-100/90 font-medium">
+                  {language === 'es' ? 'Ayudá a la comunidad en vivo' : 'Help the community live'}
+                </p>
               </div>
             </div>
             <button
@@ -109,7 +169,9 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
         {/* Report Types */}
         {!selectedType ? (
           <div className="p-6 space-y-3">
-            <p className="text-slate-400 text-sm font-semibold mb-4 uppercase tracking-wider">¿Qué está pasando ahora?</p>
+            <p className="text-slate-400 text-sm font-semibold mb-4 uppercase tracking-wider">
+              {language === 'es' ? '¿Qué está pasando ahora?' : 'What is happening now?'}
+            </p>
             {reportTypes.map((type) => (
               <button
                 key={type.id}
@@ -135,7 +197,7 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
               onClick={() => setSelectedType(null)}
               className="text-orange-400 hover:text-orange-300 flex items-center gap-2 font-semibold transition-colors"
             >
-              ← Volver
+              {language === 'es' ? '← Volver' : '← Back'}
             </button>
 
             <div className="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-4">
@@ -152,7 +214,7 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
               <textarea
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
-                placeholder="Agregá detalles sobre el incidente..."
+                placeholder={language === 'es' ? 'Agregá detalles sobre el incidente...' : 'Add details about the incident...'}
                 className="w-full p-4 rounded-xl bg-obsidian-dark border border-slate-700/80 focus:border-orange-500 text-slate-100 focus:outline-none resize-none placeholder-slate-500 transition-colors"
                 rows={3}
               />
@@ -161,9 +223,13 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
             <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex items-start gap-3">
               <div className="text-2xl">💡</div>
               <div>
-                <p className="text-sm font-bold text-indigo-300">Tip de la comunidad</p>
+                <p className="text-sm font-bold text-indigo-300">
+                  {language === 'es' ? 'Tip de la comunidad' : 'Community tip'}
+                </p>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Cuanto más específico seas, más útil será tu reporte para otros pasajeros que estén esperando la línea.
+                  {language === 'es' 
+                    ? 'Cuanto más específico seas, más útil será tu reporte para otros pasajeros que estén esperando la línea.'
+                    : 'The more specific you are, the more helpful your report will be for other riders waiting on the street.'}
                 </p>
               </div>
             </div>
@@ -176,12 +242,12 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  Enviando...
+                  {language === 'es' ? 'Enviando...' : 'Submitting...'}
                 </>
               ) : (
                 <>
                   <ThumbsUp className="w-5 h-5" />
-                  Enviar Reporte
+                  {language === 'es' ? 'Enviar Reporte' : 'Submit Report'}
                 </>
               )}
             </button>
