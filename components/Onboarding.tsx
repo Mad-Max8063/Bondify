@@ -11,12 +11,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     <div className="h-dynamic bg-obsidian flex flex-col p-6 items-center justify-center overflow-y-auto text-slate-100">
       <div className="w-full max-w-md space-y-6">
 
-        {/* 3D Animated Colectivo Preview Header */}
+        {/* Side-Profile Animated Colectivo Preview Header */}
         <div className="text-center space-y-4">
           <div className="w-24 h-24 mx-auto relative flex items-center justify-center filter drop-shadow-[0_8px_24px_rgba(16,185,129,0.25)] select-none">
             <svg viewBox="0 0 64 64" className="w-24 h-24">
               <defs>
-                <linearGradient id="onboardBusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="onboardBusGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#10B981" />
                   <stop offset="100%" stopColor="#047857" />
                 </linearGradient>
@@ -29,45 +29,74 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 </filter>
               </defs>
 
-              <ellipse cx="32" cy="52" rx="22" ry="4" fill="rgba(0,0,0,0.6)" />
+              {/* Undercarriage shadow */}
+              <ellipse cx="32" cy="52" rx="26" ry="3.5" fill="rgba(0,0,0,0.6)" />
 
+              {/* Bouncing Bus Chassis Group */}
               <g className="animate-colectivo-bounce">
-                <path d="M 12 36 L 50 39" stroke="#10B981" strokeWidth="4" strokeLinecap="round" filter="url(#onboardGlow)" opacity="0.9" />
+                {/* Neon glow undercarriage */}
+                <line x1="12" y1="46" x2="52" y2="46" stroke="#10B981" strokeWidth="4" strokeLinecap="round" filter="url(#onboardGlow)" opacity="0.9" />
 
-                <path d="M 12 36 L 36 46 L 36 18 L 12 12 Z" fill="url(#onboardBusGrad)" opacity="0.95" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+                {/* Main Bus Body (Side Profile) */}
+                <path d="M 8 18 C 8 15, 11 14, 14 14 L 46 14 C 50 14, 55 16, 56 22 L 56 42 C 56 44, 54 45, 52 45 L 12 45 C 9 45, 8 44, 8 42 Z" fill="url(#onboardBusGrad)" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
+
+                {/* Windshield / Driver window (Front - Right side) */}
+                <path d="M 44 17 H 51 Q 53 17 53 21 L 53 28 H 44 Z" fill="#60A5FA" opacity="0.85" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
                 
-                <path d="M 36 46 L 50 38 L 50 14 L 36 18 Z" fill="url(#onboardBusGrad)" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
-
-                <path d="M 38 19 L 48 16 L 48 26 L 38 29 Z" fill="#E2E8F0" opacity="0.8" />
-                <path d="M 39 20 L 47 18 L 47 25 L 39 27 Z" fill="#60A5FA" opacity="0.7" />
+                {/* Side window 1 */}
+                <rect x="33" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
                 
-                <ellipse cx="42" cy="23" rx="1.8" ry="3" fill="#000" />
-                <circle cx="41.5" cy="22" r="0.6" fill="#fff" />
-                <ellipse cx="45" cy="21.5" rx="1.8" ry="3" fill="#000" />
-                <circle cx="44.5" cy="20.5" r="0.6" fill="#fff" />
+                {/* Side window 2 (with Pixar Mascot eyes looking out!) */}
+                <g>
+                  <rect x="22" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+                  {/* Pixar Eyes looking at the user */}
+                  <ellipse cx="25" cy="22.5" rx="1.5" ry="2.2" fill="#fff" />
+                  <circle cx="25" cy="22.5" r="0.8" fill="#000" />
+                  <ellipse cx="27.5" cy="22.5" rx="1.5" ry="2.2" fill="#fff" />
+                  <circle cx="27.5" cy="22.5" r="0.8" fill="#000" />
+                  <circle cx="24.7" cy="22" r="0.4" fill="#fff" />
+                  <circle cx="27.2" cy="22" r="0.4" fill="#fff" />
+                </g>
 
-                <path d="M 14 16 L 20 18 L 20 26 L 14 24 Z" fill="#1E293B" opacity="0.9" />
-                <path d="M 22 19 L 28 21 L 28 29 L 22 27 Z" fill="#1E293B" opacity="0.9" />
-                <path d="M 30 22 L 34 23.5 L 34 31.5 L 30 30 Z" fill="#1E293B" opacity="0.9" />
+                {/* Side window 3 */}
+                <rect x="11" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+
+                {/* Sleek horizontal neon green stripe */}
+                <line x1="8" y1="33" x2="56" y2="33" stroke="#A7F3D0" strokeWidth="1.5" opacity="0.8" />
+                <line x1="8" y1="35" x2="56" y2="35" stroke="#10B981" strokeWidth="1" opacity="0.5" />
+
+                {/* Front Headlight (glowing) */}
+                <circle cx="56" cy="36" r="2.2" fill="#FBBF24" filter="url(#onboardGlow)" />
                 
-                <path d="M 38 13.5 L 48 11.5 L 48 14.5 L 38 16.5 Z" fill="#0F172A" />
-                <text x="39" y="15" fill="#F59E0B" fontSize="3.5" fontFamily="monospace" fontWeight="black" transform="skewY(4) rotate(-3)">152</text>
-
-                <circle cx="49" cy="32" r="2" fill="#FBBF24" filter="url(#onboardGlow)" />
+                {/* Rear Taillight */}
+                <circle cx="8" cy="36" r="1.5" fill="#EF4444" />
+                
+                {/* LED Route Sign */}
+                <rect x="25" y="9" width="14" height="4" rx="1" fill="#0F172A" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+                <text x="27.5" y="12.2" fill="#F59E0B" fontSize="3" fontFamily="monospace" fontWeight="black" letterSpacing="0.2">152</text>
               </g>
 
-              <g className="animate-wheel-spin-rear">
-                <circle cx="26" cy="41" r="5" fill="#030712" />
-                <circle cx="26" cy="41" r="2.5" fill="#4B5563" />
-                <line x1="22" y1="41" x2="30" y2="41" stroke="#9CA3AF" strokeWidth="0.8" />
-                <line x1="26" y1="37" x2="26" y2="45" stroke="#9CA3AF" strokeWidth="0.8" />
+              {/* Rotating Wheels (Locked to the ground, spinning!) */}
+              {/* Rear Wheel Group */}
+              <g className="animate-wheel-spin-rear-side">
+                <circle cx="16" cy="46" r="6" fill="#030712" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+                <circle cx="16" cy="46" r="2.8" fill="#4B5563" />
+                {/* Wheel spoke patterns that spin */}
+                <line x1="11" y1="46" x2="21" y2="46" stroke="#9CA3AF" strokeWidth="1" />
+                <line x1="16" y1="41" x2="16" y2="51" stroke="#9CA3AF" strokeWidth="1" />
+                <line x1="12.5" y1="42.5" x2="19.5" y2="49.5" stroke="#9CA3AF" strokeWidth="0.7" />
+                <line x1="12.5" y1="49.5" x2="19.5" y2="42.5" stroke="#9CA3AF" strokeWidth="0.7" />
               </g>
 
-              <g className="animate-wheel-spin-front">
-                <circle cx="45" cy="42.5" r="5" fill="#030712" />
-                <circle cx="45" cy="42.5" r="2.5" fill="#4B5563" />
-                <line x1="41" y1="42.5" x2="49" y2="42.5" stroke="#9CA3AF" strokeWidth="0.8" />
-                <line x1="45" y1="38.5" x2="45" y2="46.5" stroke="#9CA3AF" strokeWidth="0.8" />
+              {/* Front Wheel Group --> */}
+              <g className="animate-wheel-spin-front-side">
+                <circle cx="48" cy="46" r="6" fill="#030712" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+                <circle cx="48" cy="46" r="2.8" fill="#4B5563" />
+                {/* Wheel spoke patterns that spin */}
+                <line x1="43" y1="46" x2="53" y2="46" stroke="#9CA3AF" strokeWidth="1" />
+                <line x1="48" y1="41" x2="48" y2="51" stroke="#9CA3AF" strokeWidth="1" />
+                <line x1="44.5" y1="42.5" x2="51.5" y2="49.5" stroke="#9CA3AF" strokeWidth="0.7" />
+                <line x1="44.5" y1="49.5" x2="51.5" y2="42.5" stroke="#9CA3AF" strokeWidth="0.7" />
               </g>
             </svg>
           </div>
