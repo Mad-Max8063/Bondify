@@ -85,7 +85,51 @@ type TranslationKeys =
   | 'deviation_confirm_btn'
   | 'deviation_confirm_reject'
   | 'deviation_notif_title'
-  | 'deviation_notif_desc';
+  | 'deviation_notif_desc'
+  | 'deviation_confirm_passenger_report'
+  | 'deviation_confirm_community_validations'
+  | 'deviation_confirm_need_more'
+  | 'deviation_confirm_missing_single'
+  | 'deviation_confirm_missing_multiple'
+  | 'deviation_confirm_reason_title'
+  | 'deviation_confirm_reason_desc'
+  | 'deviation_confirm_btn_sub'
+  | 'deviation_confirm_reject_sub'
+  | 'traveler_how_works'
+  | 'traveler_how_works_desc'
+  | 'traveler_choose_line'
+  | 'traveler_manual_placeholder'
+  | 'traveler_choose_ramal'
+  | 'traveler_select_ramal'
+  | 'traveler_select_ramal_other'
+  | 'traveler_battery_warning'
+  | 'install_already_installed'
+  | 'install_already_installed_desc'
+  | 'install_continue'
+  | 'install_title'
+  | 'install_subtitle'
+  | 'install_btn_now'
+  | 'install_ios_step1_title'
+  | 'install_ios_step1_desc'
+  | 'install_ios_step2_title'
+  | 'install_ios_step2_desc'
+  | 'install_ios_step3_title'
+  | 'install_ios_step3_desc'
+  | 'install_android_step1_title'
+  | 'install_android_step1_desc'
+  | 'install_android_step2_title'
+  | 'install_android_step2_desc'
+  | 'install_android_step3_title'
+  | 'install_android_step3_desc'
+  | 'install_benefits'
+  | 'geo_sharing_active'
+  | 'geo_sharing_desc'
+  | 'geo_sharing_get_off'
+  | 'geo_sharing_panic'
+  | 'geo_sharing_verified'
+  | 'notif_detour_confirmed_title'
+  | 'notif_detour_confirmed_desc'
+  | 'notif_detour_verified_by';
 
 const translations: Record<Language, Record<TranslationKeys, string>> = {
   es: {
@@ -172,6 +216,50 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     deviation_confirm_reject: 'No, recorrido normal 👍',
     deviation_notif_title: '↪️ Desvío Confirmado en Línea',
     deviation_notif_desc: 'El desvío ya fue validado por pasajeros en tiempo real. ¡Ruta recalculada!',
+    deviation_confirm_passenger_report: '↪️ Un pasajero reportó que este colectivo se desvió',
+    deviation_confirm_community_validations: 'Validaciones comunitarias',
+    deviation_confirm_need_more: 'Para confirmar el desvío y alertar a otros usuarios en las paradas, necesitamos que {count} pasajeros más lo validen en vivo.',
+    deviation_confirm_missing_single: '¡Falta solo 1 confirmación!',
+    deviation_confirm_missing_multiple: 'Faltan {count} confirmaciones más',
+    deviation_confirm_reason_title: '¿Por qué 3 confirmaciones?',
+    deviation_confirm_reason_desc: 'Por seguridad y consistencia, los reportes comunitarios de desvío requieren validación cruzada antes de notificar oficialmente a toda la comunidad.',
+    deviation_confirm_btn_sub: 'Confirmo que el colectivo cambió de ruta',
+    deviation_confirm_reject_sub: 'El colectivo va por el recorrido habitual',
+    traveler_how_works: '¿Cómo funciona?',
+    traveler_how_works_desc: 'Cuando activás el modo viajero, tu ubicación GPS se comparte automáticamente de forma anónima. Otros usuarios podrán ver dónde está tu colectivo en tiempo real.',
+    traveler_choose_line: '¿En qué línea estás viajando?',
+    traveler_manual_placeholder: 'O escribí el número de línea',
+    traveler_choose_ramal: 'Ramal (opcional)',
+    traveler_select_ramal: 'Seleccioná el ramal',
+    traveler_select_ramal_other: 'Otro',
+    traveler_battery_warning: '🔋 El GPS consume batería. Desactivá cuando bajes del colectivo.',
+    install_already_installed: '¡Ya instalaste Bondify!',
+    install_already_installed_desc: 'Estás usando la app instalada. ¡Genial!',
+    install_continue: 'Continuar',
+    install_title: 'Instalá Bondify',
+    install_subtitle: 'Acceso rápido desde tu inicio',
+    install_btn_now: 'Instalar ahora',
+    install_ios_step1_title: 'Tocá el botón Compartir',
+    install_ios_step1_desc: 'Buscá el ícono □↑ en la barra de Safari',
+    install_ios_step2_title: 'Agregar a pantalla de inicio',
+    install_ios_step2_desc: 'Deslizá hacia abajo y tocá "Agregar a pantalla de inicio"',
+    install_ios_step3_title: 'Confirmá y listo',
+    install_ios_step3_desc: 'Tocá "Agregar" y Bondify aparecerá como app',
+    install_android_step1_title: 'Menú del navegador',
+    install_android_step1_desc: 'Tocá los 3 puntos ⋮ en Chrome',
+    install_android_step2_title: 'Instalar aplicación',
+    install_android_step2_desc: 'Seleccioná "Instalar app" o "Agregar a pantalla"',
+    install_android_step3_title: '¡Listo!',
+    install_android_step3_desc: 'Bondify estará en tu pantalla de inicio',
+    install_benefits: '✨ Sin Play Store ni App Store • Acceso instantáneo • Funciona offline',
+    geo_sharing_active: 'Compartiendo ubicación',
+    geo_sharing_desc: '📍 Tu ubicación se comparte con un margen de 50m para tu privacidad.',
+    geo_sharing_get_off: 'Bajarme',
+    geo_sharing_panic: '🚨 PÁNICO',
+    geo_sharing_verified: 'Verificado',
+    notif_detour_confirmed_title: '¡Alerta de Desvío Confirmada!',
+    notif_detour_confirmed_desc: 'La Línea {linea} se está desviando de su recorrido habitual.',
+    notif_detour_verified_by: 'Verificado por 3 pasajeros a bordo',
   },
   en: {
     app_subtitle: 'Travel better, wait less.',
@@ -257,6 +345,50 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     deviation_confirm_reject: 'No, normal route 👍',
     deviation_notif_title: '↪️ Confirmed Route Detour',
     deviation_notif_desc: 'Detour successfully validated by active riders. Live route updated!',
+    deviation_confirm_passenger_report: '↪️ A passenger reported that this bus detoured',
+    deviation_confirm_community_validations: 'Community validations',
+    deviation_confirm_need_more: 'To confirm the detour and alert other users at stops, we need {count} more passengers to validate it live.',
+    deviation_confirm_missing_single: 'Only 1 confirmation left!',
+    deviation_confirm_missing_multiple: '{count} more confirmations left',
+    deviation_confirm_reason_title: 'Why 3 confirmations?',
+    deviation_confirm_reason_desc: 'For safety and consistency, community detour reports require cross-validation before officially notifying the entire community.',
+    deviation_confirm_btn_sub: 'I confirm the bus changed its route',
+    deviation_confirm_reject_sub: 'The bus is following its standard route',
+    traveler_how_works: 'How does it work?',
+    traveler_how_works_desc: 'When you activate passenger mode, your GPS location is automatically and anonymously shared. Other users will see where your bus is in real-time.',
+    traveler_choose_line: 'Which line are you riding?',
+    traveler_manual_placeholder: 'Or write the line number',
+    traveler_choose_ramal: 'Branch (optional)',
+    traveler_select_ramal: 'Select branch',
+    traveler_select_ramal_other: 'Other',
+    traveler_battery_warning: '🔋 GPS uses battery power. Turn it off when you get off the bus.',
+    install_already_installed: 'You already installed Bondify!',
+    install_already_installed_desc: 'You are using the installed app. Awesome!',
+    install_continue: 'Continue',
+    install_title: 'Install Bondify',
+    install_subtitle: 'Quick access from your home screen',
+    install_btn_now: 'Install now',
+    install_ios_step1_title: 'Tap the Share button',
+    install_ios_step1_desc: 'Look for the □↑ icon in Safari bar',
+    install_ios_step2_title: 'Add to Home Screen',
+    install_ios_step2_desc: 'Scroll down and tap "Add to Home Screen"',
+    install_ios_step3_title: 'Confirm and you are done',
+    install_ios_step3_desc: 'Tap "Add" and Bondify will appear as an app',
+    install_android_step1_title: 'Browser menu',
+    install_android_step1_desc: 'Tap the 3 dots ⋮ in Chrome',
+    install_android_step2_title: 'Install application',
+    install_android_step2_desc: 'Select "Install app" or "Add to screen"',
+    install_android_step3_title: 'Done!',
+    install_android_step3_desc: 'Bondify will be on your home screen',
+    install_benefits: '✨ No Play Store or App Store • Instant access • Works offline',
+    geo_sharing_active: 'Sharing location',
+    geo_sharing_desc: '📍 Your location is shared with a 50m margin for your privacy.',
+    geo_sharing_get_off: 'Get off',
+    geo_sharing_panic: '🚨 PANIC',
+    geo_sharing_verified: 'Verified',
+    notif_detour_confirmed_title: 'Route Detour Confirmed!',
+    notif_detour_confirmed_desc: 'Line {linea} is detouring from its usual route.',
+    notif_detour_verified_by: 'Verified by 3 passengers on board',
   },
 };
 

@@ -1,5 +1,6 @@
+import React, { useState } from 'react';
 import { Navigation, Bus, X, Star } from 'lucide-react';
-import { colectivosAPI } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Routine } from '../types';
 
 interface ActivarViajeroModalProps {
@@ -11,6 +12,7 @@ interface ActivarViajeroModalProps {
 export const ActivarViajeroModal: React.FC<ActivarViajeroModalProps> = ({ onActivar, onCancelar, routines = [] }) => {
   const [linea, setLinea] = useState('');
   const [ramal, setRamal] = useState('');
+  const { t } = useLanguage();
 
   // Combinar líneas comunes con líneas de las rutinas del usuario
   const routineLines = routines.map(r => ({ linea: r.line, ramales: ['Centro'], isRoutine: true }));
@@ -39,67 +41,66 @@ export const ActivarViajeroModal: React.FC<ActivarViajeroModalProps> = ({ onActi
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95">
+      <div className="glass-card border border-slate-700/50 rounded-3xl w-full max-w-md shadow-[0_15px_40px_rgba(0,0,0,0.5)] animate-in zoom-in-95 max-h-[90dvh] overflow-y-auto scrollbar-thin flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white rounded-t-3xl">
+        <div className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 backdrop-blur-xl p-6 text-white rounded-t-3xl border-b border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center border border-white/10 flex-shrink-0 animate-pulse">
                 <Navigation className="w-7 h-7" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Activar Modo Viajero</h2>
-                <p className="text-sm text-green-100">Compartí tu ubicación en tiempo real</p>
+                <h2 className="text-xl font-bold text-slate-100">{t('traveler_title')}</h2>
+                <p className="text-xs text-green-100/90 font-medium">{t('onboarding_privacy')}</p>
               </div>
             </div>
             <button
               onClick={onCancelar}
-              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors flex-shrink-0 border border-white/10"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 flex-1">
           {/* Explicación */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+          <div className="bg-luminous-green/10 border border-luminous-green/20 rounded-2xl p-4 shadow-inner">
             <div className="flex items-start gap-3">
-              <div className="text-3xl">📍</div>
+              <div className="text-2xl mt-0.5 flex-shrink-0">📍</div>
               <div>
-                <p className="font-bold text-green-900 mb-1">¿Cómo funciona?</p>
-                <p className="text-sm text-green-700">
-                  Cuando activás el modo viajero, tu ubicación GPS se comparte automáticamente.
-                  Otros usuarios podrán ver dónde está tu colectivo en tiempo real.
+                <p className="font-bold text-luminous-green mb-1 text-sm">{t('traveler_how_works')}</p>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {t('traveler_how_works_desc')}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Selección de línea */}
-          <div>
-            <label className="block text-sm font-bold text-slate-900 mb-3">
-              ¿En qué línea estás viajando?
+          <div className="space-y-3">
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {t('traveler_choose_line')}
             </label>
 
             {/* Líneas comunes - botones rápidos */}
-            <div className="grid grid-cols-5 gap-2 mb-4">
+            <div className="grid grid-cols-5 gap-2">
               {lineasComunes.map((l) => (
                 <button
                   key={l.linea}
                   onClick={() => setLinea(l.linea)}
-                  className={`p-3 rounded-xl font-bold text-lg transition-all relative overflow-hidden ${linea === l.linea
-                      ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg scale-105'
+                  className={`p-3 rounded-xl font-black text-lg transition-all relative overflow-hidden active:scale-95 flex items-center justify-center ${linea === l.linea
+                      ? 'bg-gradient-to-br from-luminous-green to-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)] scale-105 border border-luminous-green/30'
                       : l.isRoutine
-                        ? 'bg-green-50 text-green-700 border-2 border-green-200 hover:bg-green-100'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? 'bg-luminous-green/10 text-luminous-green border border-luminous-green/30 hover:bg-luminous-green/20'
+                        : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
                     }`}
                 >
                   {l.linea}
                   {l.isRoutine && (
-                    <div className="absolute top-0 right-0 p-1">
-                      <Star className="w-2.5 h-2.5 text-green-500 fill-green-500" />
+                    <div className="absolute top-0 right-0 p-0.5">
+                      <Star className="w-2 h-2 text-luminous-amber fill-luminous-amber" />
                     </div>
                   )}
                 </button>
@@ -111,55 +112,55 @@ export const ActivarViajeroModal: React.FC<ActivarViajeroModalProps> = ({ onActi
               type="text"
               value={linea}
               onChange={(e) => setLinea(e.target.value)}
-              placeholder="O escribí el número de línea"
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:outline-none font-medium text-lg text-center"
+              placeholder={t('traveler_manual_placeholder')}
+              className="w-full px-4 py-3 text-center text-lg font-bold glass-input border border-slate-700/50 bg-slate-900/50 text-slate-100 rounded-xl focus:border-luminous-green focus:shadow-[0_0_12px_rgba(16,185,129,0.2)] focus:outline-none placeholder-slate-500"
             />
           </div>
 
           {/* Selección de ramal */}
           {linea && (
-            <div className="animate-in slide-in-from-top">
-              <label className="block text-sm font-bold text-slate-900 mb-3">
-                Ramal (opcional)
+            <div className="animate-in slide-in-from-top duration-300 space-y-2">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                {t('traveler_choose_ramal')}
               </label>
               <select
                 value={ramal}
                 onChange={(e) => setRamal(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:outline-none"
+                className="w-full px-4 py-3 glass-input border border-slate-700/50 bg-slate-900/50 text-slate-100 rounded-xl focus:border-luminous-green focus:outline-none"
               >
-                <option value="">Seleccioná el ramal</option>
+                <option value="" className="bg-obsidian-light text-slate-400">{t('traveler_select_ramal')}</option>
                 {lineasComunes.find(l => l.linea === linea)?.ramales.map(r => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r} className="bg-obsidian text-slate-100">{r}</option>
                 ))}
-                <option value="Centro">Centro</option>
-                <option value="Otro">Otro</option>
+                <option value="Centro" className="bg-obsidian text-slate-100">Centro</option>
+                <option value="Otro" className="bg-obsidian text-slate-100">{t('traveler_select_ramal_other')}</option>
               </select>
             </div>
           )}
 
           {/* Botones */}
-          <div className="space-y-3 pt-4">
+          <div className="space-y-3 pt-2">
             <button
               onClick={handleActivar}
               disabled={!linea}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-luminous-green to-emerald-600 hover:from-emerald-500 hover:to-luminous-green text-white py-4 rounded-2xl font-black text-base shadow-[0_4px_20px_rgba(16,185,129,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 flex items-center justify-center gap-2"
             >
               <Navigation className="w-5 h-5" />
-              Comenzar a Compartir Ubicación
+              {t('traveler_activate')}
             </button>
 
             <button
               onClick={onCancelar}
-              className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+              className="w-full bg-white/5 border border-slate-700/50 text-slate-300 py-3.5 rounded-2xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all active:scale-98"
             >
-              Cancelar
+              {t('traveler_cancel')}
             </button>
           </div>
 
           {/* Advertencia de batería */}
-          <div className="text-center">
-            <p className="text-xs text-slate-500">
-              🔋 El GPS consume batería. Desactivá cuando bajes del colectivo.
+          <div className="text-center pt-2">
+            <p className="text-xs text-slate-500 font-medium">
+              {t('traveler_battery_warning')}
             </p>
           </div>
         </div>

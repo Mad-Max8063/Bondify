@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigation, X, MapPin, Bell } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DesvioNotificacionProps {
   linea: string;
@@ -13,6 +14,7 @@ export const DesvioNotificacion: React.FC<DesvioNotificacionProps> = ({
   onClose
 }) => {
   const [visible, setVisible] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Auto cerrar después de 10 segundos
@@ -27,26 +29,28 @@ export const DesvioNotificacion: React.FC<DesvioNotificacionProps> = ({
   if (!visible) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[9998] animate-in slide-in-from-top duration-500">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-2xl p-4 text-white">
+    <div className="fixed top-4 left-4 right-4 z-[9998] animate-in slide-in-from-top duration-500 w-[calc(100%-2rem)] max-w-sm mx-auto">
+      <div className="bg-gradient-to-r from-blue-600/95 to-indigo-700/95 backdrop-blur-xl rounded-3xl shadow-2xl p-4 text-white border border-white/10">
         <div className="flex items-start gap-3">
           {/* Icono pulsante */}
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center animate-pulse flex-shrink-0">
+          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center animate-pulse flex-shrink-0 border border-white/10">
             <Navigation className="w-6 h-6" />
           </div>
           
           {/* Contenido */}
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <Bell className="w-4 h-4" />
-              <h4 className="font-bold text-lg">¡Alerta de Desvío Confirmada!</h4>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Bell className="w-3.5 h-3.5 text-blue-200" />
+              <h4 className="font-bold text-base leading-tight">{t('notif_detour_confirmed_title')}</h4>
             </div>
-            <p className="text-sm text-blue-100">
-              La <span className="font-bold">Línea {linea}</span>{ramal && ` (${ramal})`} se está desviando de su recorrido habitual.
+            <p className="text-xs text-blue-100 leading-normal">
+              {t('notif_detour_confirmed_desc')
+                .replace('{linea}', linea)
+                .concat(ramal ? ` (${ramal})` : '')}
             </p>
-            <div className="flex items-center gap-2 mt-2 text-xs text-blue-200">
-              <MapPin className="w-3 h-3" />
-              <span>Verificado por 3 pasajeros a bordo</span>
+            <div className="flex items-center gap-1.5 mt-2.5 text-[10px] font-bold text-blue-200/90">
+              <MapPin className="w-3 h-3 text-blue-300" />
+              <span>{t('notif_detour_verified_by')}</span>
             </div>
           </div>
 
@@ -56,16 +60,16 @@ export const DesvioNotificacion: React.FC<DesvioNotificacionProps> = ({
               setVisible(false);
               setTimeout(onClose, 300);
             }}
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center flex-shrink-0 transition-colors"
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 transition-colors active:scale-95 border border-white/5"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
 
         {/* Barra de progreso para auto-cierre */}
-        <div className="mt-3 w-full bg-white/20 rounded-full h-1 overflow-hidden">
+        <div className="mt-3.5 w-full bg-white/20 rounded-full h-1 overflow-hidden">
           <div 
-            className="h-full bg-white/60 rounded-full animate-[shrink_10s_linear_forwards]"
+            className="h-full bg-white/60 rounded-full"
             style={{ 
               animation: 'shrink 10s linear forwards',
               width: '100%'
