@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, MapPin, LogOut, Navigation } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DesviacionAlertProps {
   linea: string;
@@ -16,6 +17,7 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
   onConfirmarDesvio,
   onSeguirViajando
 }) => {
+  const { language } = useLanguage();
   const [pulsando, setPulsando] = useState(false);
 
   React.useEffect(() => {
@@ -42,8 +44,12 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
               <AlertTriangle className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-100">¡Desviación Detectada!</h2>
-              <p className="text-sm text-orange-200/90 font-medium">Línea {linea} {ramal && `(${ramal})`}</p>
+              <h2 className="text-2xl font-bold text-slate-100">
+                {language === 'es' ? '¡Desviación Detectada!' : 'Detour Detected!'}
+              </h2>
+              <p className="text-sm text-orange-200/90 font-medium">
+                {language === 'es' ? `Línea ${linea}` : `Line ${linea}`} {ramal && `(${ramal})`}
+              </p>
             </div>
           </div>
         </div>
@@ -53,21 +59,23 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
           {/* Explicación */}
           <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4">
             <p className="text-orange-300 font-bold mb-2 text-sm">
-              📍 Notamos que te desviaste de tu ruta habitual
+              {language === 'es' ? '📍 Notamos que te desviaste de tu ruta habitual' : '📍 Detour detected from your usual route'}
             </p>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Esto puede ocurrir por diferentes motivos:
+              {language === 'es' ? 'Esto puede ocurrir por diferentes motivos:' : 'This can happen due to several reasons:'}
             </p>
             <ul className="text-xs text-slate-400 mt-2 space-y-1 ml-2">
-              <li>• Ya te bajaste del colectivo</li>
-              <li>• El colectivo tomó un desvío de emergencia</li>
-              <li>• Estás en otra ruta diferente</li>
+              <li>• {language === 'es' ? 'Ya te bajaste del colectivo' : 'You already got off the bus'}</li>
+              <li>• {language === 'es' ? 'El colectivo tomó un desvío de emergencia' : 'The bus took an emergency detour'}</li>
+              <li>• {language === 'es' ? 'Estás en otra ruta diferente' : 'You are on a different route'}</li>
             </ul>
           </div>
 
           {/* Opciones */}
           <div className="space-y-3">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">¿Qué está pasando?</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {language === 'es' ? '¿Qué está pasando?' : 'What is happening?'}
+            </p>
             
             {/* Opción 1: Me bajé */}
             <button
@@ -78,8 +86,12 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
                 <LogOut className="w-6 h-6" />
               </div>
               <div className="flex-1 text-left">
-                <p className="font-bold text-luminous-green text-sm">Ya me bajé del colectivo</p>
-                <p className="text-xs text-slate-400 mt-0.5">Dejaré de compartir mi ubicación</p>
+                <p className="font-bold text-luminous-green text-sm">
+                  {language === 'es' ? 'Ya me bajé del colectivo' : 'I already got off the bus'}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {language === 'es' ? 'Dejaré de compartir mi ubicación' : 'Stop sharing my location'}
+                </p>
               </div>
             </button>
 
@@ -92,8 +104,12 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
                 <Navigation className="w-6 h-6" />
               </div>
               <div className="flex-1 text-left">
-                <p className="font-bold text-luminous-amber text-sm">Hay un desvío en la ruta</p>
-                <p className="text-xs text-slate-400 mt-0.5">Continuaré compartiendo la nueva ruta</p>
+                <p className="font-bold text-luminous-amber text-sm">
+                  {language === 'es' ? 'Hay un desvío en la ruta' : 'There is a detour on the route'}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {language === 'es' ? 'Continuaré compartiendo la nueva ruta' : 'Keep sharing the new detoured path'}
+                </p>
               </div>
             </button>
 
@@ -106,19 +122,25 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
                 <MapPin className="w-6 h-6" />
               </div>
               <div className="flex-1 text-left">
-                <p className="font-bold text-indigo-400 text-sm">Sigo viajando (falsa alarma)</p>
-                <p className="text-xs text-slate-400 mt-0.5">Actualizar y aprender mi ruta habitual</p>
+                <p className="font-bold text-indigo-400 text-sm">
+                  {language === 'es' ? 'Sigo viajando (falsa alarma)' : 'Still riding (false alarm)'}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {language === 'es' ? 'Actualizar y aprender mi ruta habitual' : 'Update and learn my usual route'}
+                </p>
               </div>
             </button>
           </div>
 
           {/* Info adicional */}
           <div className="bg-white/5 border border-white/5 rounded-2xl p-3.5 text-[10px] text-slate-400 leading-relaxed shadow-inner">
-            <p className="font-bold mb-1 text-slate-200">💡 ¿Por qué preguntamos?</p>
+            <p className="font-bold mb-1 text-slate-200">
+              {language === 'es' ? '💡 ¿Por qué preguntamos?' : '💡 Why are we asking?'}
+            </p>
             <p>
-              Si sos el único usuario compartiendo ubicación y te bajaste, 
-              estimaremos el recorrido en <span className="font-bold text-slate-300">gris (estimado)</span> para 
-              que otros pasajeros tengan una estimación confiable sin datos desactualizados.
+              {language === 'es'
+                ? 'Si sos el único usuario compartiendo ubicación y te bajaste, estimaremos el recorrido en gris (estimado) para que otros pasajeros tengan una estimación confiable sin datos desactualizados.'
+                : 'If you are the only rider sharing GPS and you get off, we will fallback to scheduled times in grey (estimated) so others get accurate predictions without stale data.'}
             </p>
           </div>
         </div>
