@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GarageState } from '../types';
 import { BUS_COLORS, BONDIFY_ACCESSORIES } from '../constants';
-import { Trophy, Star, Paintbrush, Award, ArrowLeft, Settings, Lock, Check } from 'lucide-react';
+import { Trophy, Star, Paintbrush, ArrowLeft, Settings, Lock, Check } from 'lucide-react';
 import { Button } from './Button';
+
+interface GarageProps {
+  gameState: GarageState;
+  onUpdateColor: (color: string) => void;
+  onEquipAccessory: (id: string) => void;
+  onBuyAccessory: (id: string, cost: number) => void;
+  onClose: () => void;
+  onOpenSettings: () => void;
+}
 
 const getBusGradients = (colorClass: string, isAlive: boolean) => {
   if (!isAlive) {
@@ -30,15 +39,6 @@ const getBusGradients = (colorClass: string, isAlive: boolean) => {
   }
 };
 
-interface GarageProps {
-  gameState: GarageState;
-  onUpdateColor: (color: string) => void;
-  onEquipAccessory: (id: string) => void;
-  onBuyAccessory: (id: string, cost: number) => void;
-  onClose: () => void;
-  onOpenSettings: () => void;
-}
-
 export const Garage: React.FC<GarageProps> = ({
   gameState,
   onUpdateColor,
@@ -48,10 +48,68 @@ export const Garage: React.FC<GarageProps> = ({
   onOpenSettings
 }) => {
   const [activeTab, setActiveTab] = useState<'exterior' | 'interior' | 'arte'>('exterior');
+  
+  // Interactive Tamagotchi States
+  const [bubbleText, setBubbleText] = useState<string>('');
+  const [isWiping, setIsWiping] = useState<boolean>(false);
+  const [isHonking, setIsHonking] = useState<boolean>(false);
+  const [isEating, setIsEating] = useState<boolean>(false);
 
   const tieneOjitos = gameState.accessories.includes('ojitos_vida');
   const levelProgress = (gameState.points % 100);
   const gradients = getBusGradients(gameState.busColor, tieneOjitos);
+
+  // Auto-clear speech bubble
+  useEffect(() => {
+    if (bubbleText) {
+      const timer = setTimeout(() => {
+        setBubbleText('');
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [bubbleText]);
+
+  // Tamagotchi Handlers
+  const triggerHonk = () => {
+    if (!tieneOjitos) return;
+    setIsHonking(true);
+    
+    // Random classic Argentine bus honks
+    const honks = [
+      '¡PUIIP PUIIP! 🔊💨',
+      '¡PARAPAPÁÁÁ! 🎺🎵',
+      '¡MEEEEP MEEEP! 🚌⚡',
+      '¡BOCINAZO PORTEÑO! 📣'
+    ];
+    const randomHonk = honks[Math.floor(Math.random() * honks.length)];
+    setBubbleText(randomHonk);
+    
+    setTimeout(() => setIsHonking(false), 600);
+  };
+
+  const triggerMate = () => {
+    if (!tieneOjitos) return;
+    setIsEating(true);
+    
+    // Increase happiness local visual effect (actual state is backend driven, but this feels premium!)
+    const mates = [
+      '¡Uff, riquísimo! Gracias che 🧉💚',
+      '¡Amargo como debe ser! 🧉✨',
+      '¡Un elixir para seguir la ruta! 🧉🤩',
+      '¿Le pusiste yuyitos? ¡Qué rico! 🧉🌿'
+    ];
+    setBubbleText(mates[Math.floor(Math.random() * mates.length)]);
+    
+    setTimeout(() => setIsEating(false), 800);
+  };
+
+  const triggerWipe = () => {
+    if (!tieneOjitos) return;
+    setIsWiping(true);
+    setBubbleText('¡Ahora sí veo la ruta! Quedó pipí cucú ✨🧹');
+    
+    setTimeout(() => setIsWiping(false), 2000);
+  };
 
   // Obtener estado de felicidad
   const getFelicidadTexto = () => {
@@ -69,19 +127,36 @@ export const Garage: React.FC<GarageProps> = ({
   return (
     <div className="fixed inset-0 bg-slate-50 z-[9999] overflow-y-auto pb-24 font-sans text-slate-800">
       
-      {/* Animaciones CSS minimalistas en 2D estilo Waze */}
+      {/* CSS Keyframes for Interactive Tamagotchi Animations */}
       <style>{`
         @keyframes float-waze {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
         @keyframes swing-dados-flat {
-          0%, 100% { transform: rotate(-4deg); }
-          50% { transform: rotate(4deg); }
+          0%, 100% { transform: rotate(-5deg); }
+          50% { transform: rotate(5deg); }
         }
         @keyframes nod-dog-flat {
-          0%, 100% { transform: rotate(-2deg); }
-          50% { transform: rotate(4deg); }
+          0%, 100% { transform: rotate(-2deg) translateY(0); }
+          50% { transform: rotate(4deg) translateY(0.5px); }
+        }
+        @keyframes wiper-swing {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-55deg); }
+        }
+        @keyframes honk-squash {
+          0%, 100% { transform: scale(1); }
+          20% { transform: scale(1.08, 0.91) translateY(2px); }
+          40% { transform: scale(0.94, 1.06) translateY(-6px); }
+          65% { transform: scale(1.03, 0.97) translateY(1px); }
+          82% { transform: scale(0.98, 1.01) translateY(0); }
+        }
+        @keyframes mate-wobble {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-3deg) scale(1.05); }
+          50% { transform: rotate(3deg) scale(1.05); }
+          75% { transform: rotate(-1.5deg) scale(1.02); }
         }
         .animate-float-waze {
           animation: float-waze 3s ease-in-out infinite;
@@ -91,6 +166,15 @@ export const Garage: React.FC<GarageProps> = ({
         }
         .animate-nod-flat {
           animation: nod-dog-flat 1.2s ease-in-out infinite;
+        }
+        .animate-wiper {
+          animation: wiper-swing 0.7s ease-in-out infinite;
+        }
+        .animate-honk {
+          animation: honk-squash 0.6s ease-in-out forwards;
+        }
+        .animate-mate {
+          animation: mate-wobble 0.8s ease-in-out forwards;
         }
       `}</style>
 
@@ -150,8 +234,27 @@ export const Garage: React.FC<GarageProps> = ({
           <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-6">Avatar del Mapa</h3>
 
           <div className="h-56 w-full flex items-center justify-center relative bg-gradient-to-b from-indigo-50/20 to-transparent rounded-3xl overflow-hidden p-2">
+            
+            {/* Waze style dynamic Speech Bubble above the Colectivo */}
+            {bubbleText && (
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs font-black px-4 py-2 rounded-2xl shadow-lg border border-slate-800 animate-bounce z-40 whitespace-nowrap">
+                {bubbleText}
+                <div className="absolute bottom-[-4px] left-1/2 transform -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 border-r border-b border-slate-800" />
+              </div>
+            )}
+
             {/* 3/4 Perspective Pixar-Waze Hybrid Bus SVG */}
-            <svg viewBox="0 0 320 220" className="w-full h-full select-none" style={{ maxWidth: '300px' }}>
+            <svg 
+              viewBox="0 0 320 220" 
+              className={`w-full h-full select-none ${
+                tieneOjitos && gameState.happiness >= 75 && !isHonking && !isEating ? 'animate-float-waze' : ''
+              } ${isHonking ? 'animate-honk' : ''} ${isEating ? 'animate-mate' : ''}`} 
+              style={{ 
+                maxWidth: '300px',
+                transformOrigin: '160px 180px',
+                transition: 'all 0.5s ease-in-out'
+              }}
+            >
               <defs>
                 {/* Metallic Gold/Chrome Hubcap Gradient */}
                 <linearGradient id="chromeGold" x1="0" y1="0" x2="1" y2="1">
@@ -160,8 +263,16 @@ export const Garage: React.FC<GarageProps> = ({
                   <stop offset="100%" stopColor="#ca8a04" />
                 </linearGradient>
 
+                {/* Chrome Bumper Gradient */}
+                <linearGradient id="chromeBumper" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f1f5f9" />
+                  <stop offset="40%" stopColor="#cbd5e1" />
+                  <stop offset="60%" stopColor="#94a3b8" />
+                  <stop offset="100%" stopColor="#f8fafc" />
+                </linearGradient>
+
                 {/* Soft Ground Shadow */}
-                <ellipse id="groundShadow" cx="160" cy="180" rx="100" ry="10" fill="rgba(15,23,42,0.12)" filter="blur(4px)" />
+                <ellipse id="groundShadow" cx="160" cy="180" rx="105" ry="9" fill="rgba(15,23,42,0.14)" filter="blur(4px)" />
               </defs>
 
               {/* Floor Shadow */}
@@ -169,7 +280,7 @@ export const Garage: React.FC<GarageProps> = ({
 
               {/* Neon bajochasis (Underglow neon light) */}
               {gameState.accessories.includes('neones_chasis') && (
-                <ellipse cx="160" cy="180" rx="110" ry="15" fill="rgba(59, 130, 246, 0.65)" filter="blur(8px)" />
+                <ellipse cx="160" cy="180" rx="112" ry="14" fill="rgba(59, 130, 246, 0.65)" filter="blur(8px)" />
               )}
 
               {/* Disco LED interior light effect */}
@@ -179,134 +290,232 @@ export const Garage: React.FC<GarageProps> = ({
                 </g>
               )}
 
-              {/* CHASSIS: Front Face (facing front-left) */}
+              {/* ========================================================
+                  CHASSIS LAYERS (CLASSIC THREE-TONE BUENOS AIRES LIVERY)
+                 ======================================================== */}
+              
+              {/* LOWER BODY: dynamic color (Mercedes Benz LO 1114 chassis style) */}
+              {/* Front Face Lower */}
               <polygon
-                points="50,95 110,80 110,160 50,170"
+                points="50,115 110,105 110,160 50,170"
                 fill={gradients.main}
                 stroke={gradients.stroke}
                 strokeWidth="3"
                 strokeLinejoin="round"
               />
-
-              {/* CHASSIS: Side Face (facing side-right, receding) */}
+              {/* Side Face Lower */}
               <polygon
-                points="110,80 270,60 270,135 110,160"
+                points="110,105 270,85 270,135 110,160"
                 fill={gradients.shadow}
                 stroke={gradients.stroke}
                 strokeWidth="3"
                 strokeLinejoin="round"
               />
 
-              {/* FRONT WINDSHIELD (Glass) */}
+              {/* MIDDLE STRIPE (Livery colored band: Red/Black classic franja) */}
+              {/* Front Stripe */}
               <polygon
-                points="56,98 104,86 104,118 56,127"
-                fill="#1e293b"
+                points="50,115 110,105 110,115 50,126"
+                fill="#b91c1c" // Classic colectivos red franja
                 stroke={gradients.stroke}
-                strokeWidth="2"
+                strokeWidth="1.5"
+              />
+              {/* Side Stripe */}
+              <polygon
+                points="110,105 270,85 270,93 110,115"
+                fill="#b91c1c"
+                stroke={gradients.stroke}
+                strokeWidth="1.5"
+              />
+
+              {/* UPPER SECTION: Glass & Pillars (Mercedes classic LO 1114 round roof cabin) */}
+              {/* Front Face Upper */}
+              <polygon
+                points="50,88 110,75 110,105 50,115"
+                fill={gradients.main}
+                stroke={gradients.stroke}
+                strokeWidth="3"
+              />
+              {/* Side Face Upper */}
+              <polygon
+                points="110,75 270,55 270,85 110,105"
+                fill={gradients.shadow}
+                stroke={gradients.stroke}
+                strokeWidth="3"
+              />
+
+              {/* ROOF (Techo blanco/crema clásico de los colectivos porteños) */}
+              <polygon
+                points="52,88 110,75 270,55 264,47 106,66"
+                fill="#f8fafc" // Cream white roof
+                stroke={gradients.stroke}
+                strokeWidth="3"
                 strokeLinejoin="round"
               />
-              {/* Glass Reflection */}
+
+              {/* LIGHTED RETRO DESTINATION BOARD (La cartelera luminosa arriba del parabrisas) */}
               <polygon
-                points="56,98 85,90 70,123 56,127"
-                fill="white"
-                opacity="0.15"
+                points="60,68 104,59 104,78 60,87"
+                fill="#fef08a" // Bright yellow-white light glow
+                stroke="#0f172a"
+                strokeWidth="2.5"
+                strokeLinejoin="round"
+              />
+              <text x="65" y="79" fill="#0f172a" fontSize="10" fontWeight="900" fontFamily="sans-serif" letterSpacing="0.5" transform="matrix(0.97 -0.15 0 1 0 0)">
+                152
+              </text>
+
+              {/* ========================================================
+                  FRONT FACE DETAIL (TROMPA REDONDEADA, PARABRISAS Y FAROS)
+                 ======================================================== */}
+
+              {/* MERCEDES CLASSIC PANORAMIC ROUNDED BONNET/HOOD (La trompa redondeada clásica) */}
+              <path 
+                d="M 50,118 Q 28,128 32,150 Q 35,162 55,161 L 110,147 Q 110,135 110,123 Z"
+                fill={gradients.main}
+                stroke={gradients.stroke}
+                strokeWidth="3"
+                strokeLinejoin="round"
               />
 
-              {/* EXPRESSIVE EYES (Pixar Windshield Eyes) */}
+              {/* SPLIT WINDSHIELD GLASS (Parabrisas dividido clásico porteño) */}
+              {/* Left pane */}
+              <polygon points="56,92 78,87 78,110 56,115" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+              <polygon points="56,92 70,89 63,113 56,115" fill="white" opacity="0.15" />
+              
+              {/* Right pane */}
+              <polygon points="82,86 104,81 104,104 82,109" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+              <polygon points="82,86 96,83 89,107 82,109" fill="white" opacity="0.15" />
+
+              {/* EXPRESSIVE EYES (Pixar Windshield Eyes - dynamically reacting) */}
               {tieneOjitos && (
                 <g id="pixar-eyes">
-                  {/* LEFT EYE */}
-                  <ellipse cx="71" cy="111" rx="6" ry="9" fill="white" stroke="#0f172a" strokeWidth="1.5" />
-                  {gameState.accessories.includes('ojitos_vida') && gameState.happiness >= 75 ? (
-                    // Ecstatic Curved Happy Eyes
-                    <path d="M 68 111 Q 71 106 74 111 Q 71 116 68 111 Z" fill="#2563eb" />
+                  {/* LEFT EYE (In left pane) */}
+                  <ellipse cx="67" cy="100.5" rx="5" ry="7.5" fill="white" stroke="#0f172a" strokeWidth="1" />
+                  {gameState.happiness >= 75 ? (
+                    // Ecstatic Happy shape
+                    <path d="M 64 100.5 Q 67 96 70 100.5 Q 67 105 64 100.5 Z" fill="#3b82f6" />
                   ) : (
-                    // Normal Blue Iris
-                    <circle cx="71" cy="111" r="3.5" fill="#3b82f6" />
+                    // Normal Iris
+                    <circle cx="67" cy="100.5" r="2.8" fill="#3b82f6" />
                   )}
-                  {/* Pupil */}
-                  <circle cx="71" cy="111" r="2" fill="#0f172a" />
-                  <circle cx="69.5" cy="109.5" r="0.8" fill="white" />
+                  <circle cx="67" cy="100.5" r="1.5" fill="#0f172a" />
+                  <circle cx="65.8" cy="99.3" r="0.6" fill="white" />
 
-                  {/* RIGHT EYE */}
-                  <ellipse cx="89" cy="106.5" rx="6" ry="9" fill="white" stroke="#0f172a" strokeWidth="1.5" />
-                  {gameState.accessories.includes('ojitos_vida') && gameState.happiness >= 75 ? (
-                    // Ecstatic Curved Happy Eyes
-                    <path d="M 86 106.5 Q 89 101.5 92 106.5 Q 89 111.5 86 106.5 Z" fill="#2563eb" />
+                  {/* RIGHT EYE (In right pane) */}
+                  <ellipse cx="93" cy="94.5" rx="5" ry="7.5" fill="white" stroke="#0f172a" strokeWidth="1" />
+                  {gameState.happiness >= 75 ? (
+                    // Ecstatic Happy shape
+                    <path d="M 90 94.5 Q 93 90 96 94.5 Q 93 99 90 94.5 Z" fill="#3b82f6" />
                   ) : (
-                    // Normal Blue Iris
-                    <circle cx="89" cy="106.5" r="3.5" fill="#3b82f6" />
+                    // Normal Iris
+                    <circle cx="93" cy="94.5" r="2.8" fill="#3b82f6" />
                   )}
-                  {/* Pupil */}
-                  <circle cx="89" cy="106.5" r="2" fill="#0f172a" />
-                  <circle cx="87.5" cy="105" r="0.8" fill="white" />
+                  <circle cx="93" cy="94.5" r="1.5" fill="#0f172a" />
+                  <circle cx="91.8" cy="93.3" r="0.6" fill="white" />
 
                   {/* Drooping eyelids for Sad State */}
                   {gameState.happiness < 40 && (
                     <g opacity="0.95">
                       {/* Left sad drooping eyelid */}
-                      <path d="M 64 101 Q 72 107 78 104 L 78 98 L 64 100 Z" fill={gradients.main} stroke="#0f172a" strokeWidth="1" />
+                      <path d="M 61 93 Q 67 98 73 95 L 73 92 Z" fill={gradients.main} stroke="#0f172a" strokeWidth="0.8" />
                       {/* Right sad drooping eyelid */}
-                      <path d="M 82 97 Q 90 103 96 99 L 96 93 L 82 95 Z" fill={gradients.main} stroke="#0f172a" strokeWidth="1" />
+                      <path d="M 87 87 Q 93 92 99 89 L 99 86 Z" fill={gradients.main} stroke="#0f172a" strokeWidth="0.8" />
                     </g>
                   )}
                 </g>
               )}
 
-              {/* FRONT GRILLE & MOUTH (Trompa / Parrilla / Sonrisa) */}
+              {/* WINDSHIELD WIPERS (Limpiaparabrisas interactivos) */}
+              <g id="wipers" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round">
+                {/* Left Wiper */}
+                <g transform="translate(67, 112)">
+                  <line 
+                    x1="0" 
+                    y1="0" 
+                    x2="-6" 
+                    y2="-16" 
+                    className={isWiping ? 'animate-wiper' : ''} 
+                    style={{ transformOrigin: '0px 0px', transition: 'transform 0.1s' }} 
+                  />
+                </g>
+                {/* Right Wiper */}
+                <g transform="translate(93, 106)">
+                  <line 
+                    x1="0" 
+                    y1="0" 
+                    x2="-6" 
+                    y2="-16" 
+                    className={isWiping ? 'animate-wiper' : ''} 
+                    style={{ transformOrigin: '0px 0px', transition: 'transform 0.1s' }} 
+                  />
+                </g>
+              </g>
+
+              {/* CHROME VINTAGE FRONT GRILLE & MERCEDES LOGO SMILE (Parrilla clásica sonriente) */}
+              <path 
+                d="M 37,138 Q 45,145 78,136 Q 80,152 40,154 Z"
+                fill="#cbd5e1"
+                stroke="#475569"
+                strokeWidth="1.5"
+              />
+              {/* Mercedes-style round star smile inside grille */}
+              <circle cx="58" cy="144" r="5" fill="none" stroke="white" strokeWidth="2.5" />
               {tieneOjitos ? (
                 gameState.happiness >= 75 ? (
-                  // Wide open ecstatic smile
-                  <g>
-                    <path d="M 67 143 Q 80 159 93 140 Z" fill="#7f1d1d" stroke="#0f172a" strokeWidth="2.5" />
-                    <path d="M 72 149 Q 80 156 88 147" fill="#f43f5e" /> {/* Tongue */}
-                  </g>
+                  // Open laughing mouth overlay on bottom snout
+                  <path d="M 46,145 Q 58,155 70,142 Z" fill="#7f1d1d" stroke="#0f172a" strokeWidth="1.5" />
                 ) : gameState.happiness >= 40 ? (
-                  // Sweet normal smile
-                  <path d="M 68 142 Q 80 152 92 139" fill="none" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
+                  // Cute curved smile
+                  <path d="M 48,143 Q 58,150 68,140" fill="none" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" />
                 ) : (
-                  // Sad drooping mouth
-                  <path d="M 68 148 Q 80 141 92 145" fill="none" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
+                  // Sad curved mouth
+                  <path d="M 48,147 Q 58,142 68,145" fill="none" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" />
                 )
               ) : (
-                // Traditional metal grille if machine mode
-                <g stroke="#475569" strokeWidth="1.5">
-                  <line x1="65" y1="140" x2="95" y2="133" />
-                  <line x1="65" y1="145" x2="95" y2="138" />
-                  <line x1="65" y1="150" x2="95" y2="143" />
-                </g>
+                // Straight technical bars
+                <line x1="42" y1="145" x2="74" y2="139" stroke="white" strokeWidth="1.5" />
               )}
 
-              {/* HEADLIGHTS (Faros) */}
+              {/* BULBHEAD HEADLIGHTS (Faros circulares clásicos y salientes) */}
               {/* Left Farol */}
-              <ellipse
-                cx="58"
+              <circle
+                cx="34"
                 cy="148"
-                rx="5"
-                ry="6.5"
-                fill={tieneOjitos ? "#fde047" : "#94a3b8"}
+                r="6"
+                fill={tieneOjitos ? "#fef08a" : "#94a3b8"} // Glowing yellow LO 1114 bulb
                 stroke="#0f172a"
                 strokeWidth="2"
               />
-              {tieneOjitos && (
-                <ellipse cx="58" cy="148" rx="2.5" ry="3" fill="white" />
-              )}
-
+              <circle cx="34" cy="148" r="2.5" fill="white" />
               {/* Right Farol */}
-              <ellipse
-                cx="102"
-                cy="138"
-                rx="5"
-                ry="6.5"
-                fill={tieneOjitos ? "#fde047" : "#94a3b8"}
+              <circle
+                cx="84"
+                cy="137"
+                r="6"
+                fill={tieneOjitos ? "#fef08a" : "#94a3b8"}
                 stroke="#0f172a"
                 strokeWidth="2"
               />
-              {tieneOjitos && (
-                <ellipse cx="102" cy="138" rx="2.5" ry="3" fill="white" />
-              )}
+              <circle cx="84" cy="137" r="2.5" fill="white" />
 
-              {/* SIDE WINDOWS */}
+              {/* CLASSIC CHROME BUMPER WITH RUBBER HORNS (Paragolpes con uñas y gomas) */}
+              <path 
+                d="M 24,158 Q 55,161 94,148 L 93,153 Q 55,166 24,163 Z"
+                fill="url(#chromeBumper)"
+                stroke="#0f172a"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              {/* Rubber bumper horns (Uñas del paragolpes en negro) */}
+              <rect x="42" y="152" width="4.5" height="11" rx="1.5" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
+              <rect x="76" y="143" width="4.5" height="11" rx="1.5" fill="#1e293b" stroke="#0f172a" strokeWidth="0.8" />
+
+              {/* ========================================================
+                  SIDE FACE DETAIL (VENTANAS, RUEDAS, FILETEADOS Y ACCESORIOS)
+                 ======================================================== */}
+
+              {/* THREE RECDING VENTANAS (Ventanas inclinadas Mercedes clásicas) */}
               {/* Window 1 */}
               <polygon points="120,83 160,78 160,110 120,115" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
               <polygon points="120,83 140,80 130,113 120,115" fill="white" opacity="0.1" />
@@ -319,7 +528,7 @@ export const Garage: React.FC<GarageProps> = ({
               <polygon points="220,71 260,66 260,98 220,103" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
               <polygon points="220,71 240,68 230,101 220,103" fill="white" opacity="0.1" />
 
-              {/* Passenger silouettes inside side windows */}
+              {/* Passenger silhouettes inside windows */}
               <g opacity="0.2">
                 <circle cx="185" cy="90" r="4.5" fill="white" />
                 <path d="M 178 103 Q 185 96 192 103 Z" fill="white" />
@@ -327,31 +536,24 @@ export const Garage: React.FC<GarageProps> = ({
                 <path d="M 228 97 Q 235 90 242 97 Z" fill="white" />
               </g>
 
-              {/* SIDE STRIPE (Tira lateral clásica de Colectivo) */}
-              <polygon
-                points="110,123 270,103 270,108 110,128"
-                fill="white"
-                opacity="0.25"
-              />
-
               {/* DECORATIONS: Fileteado Porteño Basic / Premium */}
               {(gameState.accessories.includes('fileteado_basico') || gameState.accessories.includes('fileteado_premium')) && (
                 <g id="fileteado-art">
-                  {/* Basic flourishes on front panel */}
-                  <path d="M 52 160 C 65 168, 70 162, 80 162" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M 108 150 C 95 156, 90 152, 80 152" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
+                  {/* Basic flourishes on front rounded snout */}
+                  <path d="M 40,128 C 45,134, 48,131, 55,133" fill="none" stroke="#fbbf24" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M 85,123 C 80,128, 77,126, 70,128" fill="none" stroke="#fbbf24" strokeWidth="1.8" strokeLinecap="round" />
                   
-                  {/* Front panel scroll */}
-                  <path d="M 70 85 C 80 88, 85 85, 90 88" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
+                  {/* Front hood line */}
+                  <path d="M 52,159 C 62,157, 72,154, 82,152" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeLinecap="round" />
 
-                  {/* Premium Fileteado on the side */}
+                  {/* Premium Fileteado on the side panels */}
                   {gameState.accessories.includes('fileteado_premium') && (
                     <g id="fileteado-premium">
-                      {/* Elegant sweeping gold lines on side panels */}
-                      <path d="M 115 125 C 160 115, 200 105, 265 92" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" />
-                      <path d="M 125 72 C 165 67, 215 61, 255 57" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
+                      {/* Elegant gold swirls above wheels and along the franja */}
+                      <path d="M 115,123 C 160,113, 200,103, 265,90" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M 125,72 C 165,67, 215,61, 255,57" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
                       
-                      {/* "EL PORTEÑO" Sticker or Ribbon in 3/4 perspective */}
+                      {/* "EL PORTEÑO" Banner in 3/4 perspective */}
                       <polygon points="135,125 195,115 195,128 135,138" fill="rgba(15,23,42,0.85)" stroke="#fbbf24" strokeWidth="1" />
                       <text x="143" y="134" fill="#fbbf24" fontSize="6.5" fontWeight="900" fontFamily="serif" letterSpacing="1" transform="matrix(0.97 -0.15 0 1 0 0)">
                         EL PORTEÑO
@@ -361,10 +563,9 @@ export const Garage: React.FC<GarageProps> = ({
                 </g>
               )}
 
-              {/* WHEELS (Ruedas en perspectiva elíptica) */}
+              {/* WHEELS (Mercedes LO 1114 robust perspective ellipses) */}
               {/* FRONT WHEEL */}
               <g id="wheel-front">
-                {/* Black Tire */}
                 <ellipse cx="145" cy="155" rx="14" ry="18" fill="#0f172a" stroke="#475569" strokeWidth="1" />
                 <ellipse cx="145" cy="155" rx="10" ry="13.5" fill="#1e293b" />
                 
@@ -382,7 +583,6 @@ export const Garage: React.FC<GarageProps> = ({
 
               {/* REAR WHEEL */}
               <g id="wheel-rear">
-                {/* Black Tire */}
                 <ellipse cx="230" cy="144" rx="14" ry="18" fill="#0f172a" stroke="#475569" strokeWidth="1" />
                 <ellipse cx="230" cy="144" rx="10" ry="13.5" fill="#1e293b" />
 
@@ -419,19 +619,45 @@ export const Garage: React.FC<GarageProps> = ({
                 </g>
               )}
 
-              {/* PERRO TABLERO (Bobblehead dog nodding) */}
+              {/* PERRO TABLERO (Bobblehead dog nodding inside front windshield pane) */}
               {gameState.accessories.includes('perro_tablero') && (
-                <g id="perro-dashboard" className="animate-nod-flat" style={{ transformOrigin: '100px 119px' }}>
+                <g id="perro-dashboard" className="animate-nod-flat" style={{ transformOrigin: '96px 108px' }}>
                   {/* Body */}
-                  <ellipse cx="100" cy="119" rx="3.5" ry="2.5" fill="#d97706" stroke="#0f172a" strokeWidth="0.8" />
+                  <ellipse cx="96" cy="108" rx="3.5" ry="2.5" fill="#d97706" stroke="#0f172a" strokeWidth="0.8" />
                   {/* Nodding Head */}
-                  <circle cx="100" cy="114" r="2.5" fill="#b45309" stroke="#0f172a" strokeWidth="0.8" />
-                  <circle cx="99" cy="114" r="0.4" fill="black" />
-                  <path d="M 101 114 L 102.5 116.5" stroke="#b45309" strokeWidth="0.8" strokeLinecap="round" />
+                  <circle cx="96" cy="103" r="2.5" fill="#b45309" stroke="#0f172a" strokeWidth="0.8" />
+                  <circle cx="95" cy="103" r="0.4" fill="black" />
+                  <path d="M 97 103 L 98.5 105.5" stroke="#b45309" strokeWidth="0.8" strokeLinecap="round" />
                 </g>
               )}
             </svg>
           </div>
+
+          {/* ========================================================
+              VIRTUAL TAMAGOTCHI INTERACTIVE BUTTONS PANEL
+             ======================================================== */}
+          {tieneOjitos && (
+            <div className="flex gap-2.5 mt-5 w-full max-w-xs justify-center z-10">
+              <button
+                onClick={triggerHonk}
+                className="flex-1 py-2 px-3 bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 text-yellow-800 font-extrabold text-xs rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                📢 Bocina
+              </button>
+              <button
+                onClick={triggerMate}
+                className="flex-1 py-2 px-3 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200 text-emerald-800 font-extrabold text-xs rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                🧉 Cebar Mate
+              </button>
+              <button
+                onClick={triggerWipe}
+                className="flex-1 py-2 px-3 bg-sky-100 hover:bg-sky-200 border border-sky-200 text-sky-800 font-extrabold text-xs rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                🧹 Limpiar
+              </button>
+            </div>
+          )}
 
           {/* Cartel Informativo Estilo Waze */}
           {!tieneOjitos ? (
@@ -442,7 +668,7 @@ export const Garage: React.FC<GarageProps> = ({
           ) : (
             <div className="bg-indigo-50/50 border border-indigo-100/50 text-indigo-700 rounded-2xl px-4 py-2.5 text-xs text-center font-bold max-w-xs mt-3">
               {gameState.happiness < 40 
-                ? '😢 ¡Se ve triste! Hacé un reporte o viaje para alegrarle la cara en el mapa.'
+                ? '😢 ¡Se ve triste! Hacé un reporte o cebale un mate para alegrarle la cara.'
                 : '😎 ¡Excelente! Tu colectivo está feliz y reluciente en el mapa.'}
             </div>
           )}
