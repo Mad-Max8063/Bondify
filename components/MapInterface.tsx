@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BusEntity, BusStatus, UserRole, ChaosReport, ReportType, DemoAction } from '../types';
+import { BusEntity, BusStatus, UserRole, ChaosReport, ReportType, DemoAction, BusStop } from '../types';
 import { MOCK_BUSES, MOCK_REPORTS } from '../constants';
 import { MOCK_STOPS } from '../stops';
 import { MapView } from './MapView';
@@ -20,6 +20,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
     const { t, language } = useLanguage();
     const [buses, setBuses] = useState<BusEntity[]>(MOCK_BUSES);
     const [reports, setReports] = useState<ChaosReport[]>(MOCK_REPORTS);
+    const [stops, setStops] = useState<BusStop[]>(MOCK_STOPS);
     const [selectedBus, setSelectedBus] = useState<BusEntity | null>(null);
     const [showStopwatch, setShowStopwatch] = useState(false);
     const [showChaosMenu, setShowChaosMenu] = useState(false);
@@ -44,6 +45,90 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
 
         initBackend();
     }, []);
+
+    // Dynamically relocate mock data to user's location for global demo compatibility!
+    useEffect(() => {
+        if (userLocation && userLocation.lat && userLocation.lng) {
+            console.log(`🌍 Relocating demo mock data around user coordinates: [${userLocation.lat}, ${userLocation.lng}]`);
+            
+            const relocatedBuses: BusEntity[] = [
+                {
+                    id: 'b1',
+                    line: language === 'es' ? '152' : 'Line 152',
+                    status: BusStatus.VERIFIED,
+                    lat: userLocation.lat + 0.001,
+                    lng: userLocation.lng - 0.001,
+                    heading: 320,
+                    passengers: 4,
+                    lastUpdate: Date.now(),
+                    destination: language === 'es' ? 'Centro' : 'Downtown',
+                    arrivalEstimate: 3
+                },
+                {
+                    id: 'b2',
+                    line: language === 'es' ? '60' : 'Line 60',
+                    status: BusStatus.GHOST,
+                    lat: userLocation.lat - 0.002,
+                    lng: userLocation.lng + 0.002,
+                    heading: 140,
+                    passengers: 0,
+                    lastUpdate: Date.now() - 300000,
+                    destination: language === 'es' ? 'Terminal' : 'Terminal Station',
+                    arrivalEstimate: 11
+                },
+                {
+                    id: 'b3',
+                    line: language === 'es' ? '29' : 'Line 29',
+                    status: BusStatus.TRAIL,
+                    lat: userLocation.lat + 0.002,
+                    lng: userLocation.lng - 0.002,
+                    heading: 310,
+                    passengers: 0,
+                    lastUpdate: Date.now() - 60000,
+                    destination: language === 'es' ? 'Estación Norte' : 'North Station',
+                    arrivalEstimate: 7
+                }
+            ];
+
+            const relocatedReports: ChaosReport[] = [
+                {
+                    id: 'r1',
+                    type: ReportType.PICKET,
+                    lat: userLocation.lat + 0.0008,
+                    lng: userLocation.lng + 0.0008,
+                    timestamp: Date.now()
+                }
+            ];
+
+            const relocatedStops: BusStop[] = [
+                {
+                    id: 's1',
+                    name: language === 'es' ? 'Parada Plaza Principal' : 'Main Square Station',
+                    lat: userLocation.lat + 0.0005,
+                    lng: userLocation.lng - 0.0005,
+                    lines: ['152', '60']
+                },
+                {
+                    id: 's2',
+                    name: language === 'es' ? 'Estación Central' : 'Central Station',
+                    lat: userLocation.lat - 0.0012,
+                    lng: userLocation.lng + 0.0012,
+                    lines: ['152', '29']
+                },
+                {
+                    id: 's3',
+                    name: language === 'es' ? 'Avenida y 5ta Calle' : 'Avenue & 5th St',
+                    lat: userLocation.lat + 0.0018,
+                    lng: userLocation.lng - 0.0018,
+                    lines: ['60', '29']
+                }
+            ];
+
+            setBuses(relocatedBuses);
+            setReports(relocatedReports);
+            setStops(relocatedStops);
+        }
+    }, [userLocation, language]);
 
     // Load buses from backend
     const loadBusesFromBackend = async () => {
@@ -218,7 +303,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                 selectedBusId={selectedBus?.id}
                 userLocation={userLocation}
                 onMapReady={setMapInstance}
-                stops={MOCK_STOPS}
+                stops={stops}
             />
 
             {/* UI OVERLAYS (Must be z-index > map) */}
