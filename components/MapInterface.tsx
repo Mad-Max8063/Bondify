@@ -25,6 +25,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
     const [showStopwatch, setShowStopwatch] = useState(false);
     const [showChaosMenu, setShowChaosMenu] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [showHelpModal, setShowHelpModal] = useState(false);
     const [isReporting, setIsReporting] = useState(false);
     const [useRealData, setUseRealData] = useState(false);
     const [mapInstance, setMapInstance] = useState<any>(null);
@@ -308,9 +309,9 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
 
             {/* UI OVERLAYS (Must be z-index > map) */}
 
-            {/* Search Bar */}
-            <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
-                <div className="glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+            {/* Search Bar & Help Button Container */}
+            <div className="absolute top-4 left-4 right-4 z-20 flex gap-2 pointer-events-auto">
+                <div className="flex-1 glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
                     <Search className="text-slate-400 w-5 h-5" />
                     <input
                         type="text"
@@ -318,6 +319,12 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                         className="flex-1 bg-transparent outline-none text-slate-100 font-medium placeholder-slate-400 text-sm"
                     />
                 </div>
+                <button
+                    onClick={() => setShowHelpModal(true)}
+                    className="w-12 h-12 glass-card rounded-2xl flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all shadow-[0_8px_32px_rgba(0,0,0,0.35)] border border-white/10 text-lg font-black"
+                >
+                    ?
+                </button>
             </div>
 
             {/* Bottom Sheet / Info Card */}
@@ -450,6 +457,107 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
             >
                 <Navigation className="w-6 h-6" />
             </button>
+
+            {/* Help & Reference Guide Modal */}
+            {showHelpModal && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+                    <div className="glass-card border border-slate-700/50 w-full max-w-md rounded-3xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative animate-in zoom-in-95 my-auto pointer-events-auto">
+                        <button
+                            onClick={() => setShowHelpModal(false)}
+                            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-200 rounded-full hover:bg-white/10 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-5">
+                            <span className="text-2xl">💡</span>
+                            <h3 className="text-xl font-bold text-slate-100">
+                                {language === 'es' ? 'Guía de Uso Bondify' : 'Bondify User Guide'}
+                            </h3>
+                        </div>
+
+                        <div className="space-y-4 text-xs leading-relaxed text-slate-300">
+                            {/* Color References */}
+                            <div className="space-y-2.5">
+                                <p className="font-bold text-[10px] text-slate-400 uppercase tracking-wider">
+                                    {language === 'es' ? 'Referencias de Mapa' : 'Map References'}
+                                </p>
+                                <div className="space-y-2">
+                                    <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <div className="w-3.5 h-3.5 bg-luminous-green rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-slate-200">{language === 'es' ? 'VERIFICADO (En Vivo)' : 'VERIFIED (Live)'}</p>
+                                            <p className="text-slate-400 text-[11px] mt-0.5">
+                                                {language === 'es' 
+                                                    ? '¡Ubicación 100% real! Pasajeros activos a bordo comparten su viaje de forma anónima.'
+                                                    : '100% real position! Active riders on board are anonymously broadcasting the bus details.'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <div className="w-3.5 h-3.5 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.5)] mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-slate-200">{language === 'es' ? 'ESTIMADO / PROGRAMADO' : 'SCHEDULED / GHOST'}</p>
+                                            <p className="text-slate-400 text-[11px] mt-0.5">
+                                                {language === 'es' 
+                                                    ? 'Ubicación estimada según frecuencias programadas de la empresa (sin señal GPS en vivo).'
+                                                    : 'Estimated frequency location based on official transit agency timetables (no active GPS).'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <div className="w-3.5 h-3.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)] mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-slate-200">{language === 'es' ? 'ALERTA / DEMORA / DESVÍO' : 'ALERT / DELAY / DETOUR'}</p>
+                                            <p className="text-slate-400 text-[11px] mt-0.5">
+                                                {language === 'es' 
+                                                    ? 'Desvíos de ruta confirmados o demoras inusuales reportadas en vivo por la comunidad.'
+                                                    : 'Detour routes or heavy traffic delays reported in real-time by riders.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Detalle de Dinámica */}
+                            <div className="space-y-2 pt-2 border-t border-slate-800">
+                                <p className="font-bold text-[10px] text-slate-400 uppercase tracking-wider">
+                                    {language === 'es' ? '¿Cómo colaboro?' : 'How do I contribute?'}
+                                </p>
+                                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-600/10 p-3 rounded-xl border border-indigo-500/20 space-y-1.5">
+                                    <p className="font-bold text-indigo-300">
+                                        {language === 'es' ? '📶 Modo Viajero (' + t('nav_traveling') + ')' : '📶 Passenger Mode (' + t('nav_traveling') + ')'}
+                                    </p>
+                                    <p className="text-slate-400 text-[11px] leading-relaxed">
+                                        {language === 'es'
+                                            ? 'Al subir al colectivo, tocá el botón central "Esperando" para cambiar a "Viajando" y seleccionar tu línea. Tu teléfono comenzará a emitir pings anónimos, validando la posición para todos los que esperan en la calle.'
+                                            : 'Once boarding, tap the central "Waiting" button to toggle "Traveling" and pick your line. Your phone will broadcast secure pings, helping waiting riders down the line.'}
+                                    </p>
+                                </div>
+                                <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 p-3 rounded-xl border border-orange-500/20 space-y-1.5">
+                                    <p className="font-bold text-orange-300">
+                                        {language === 'es' ? '⚠️ Reportes en Caliente (Waze)' : '⚠️ Incident Reporting (Waze)'}
+                                    </p>
+                                    <p className="text-slate-400 text-[11px] leading-relaxed">
+                                        {language === 'es'
+                                            ? 'Usá el botón ⚠️ flotante del mapa para informar piquetes, accidentes o desvíos. La IA de Bondify analizará el incidente para darte consejos inmediatos de desvíos y seguridad.'
+                                            : 'Use the floating warning ⚠️ button to report roadblocks, delays, or detours. Bondify AI will analyze the incident to recommend detour alerts and safety tips.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowHelpModal(false)}
+                            className="w-full mt-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition-colors"
+                        >
+                            {language === 'es' ? 'Entendido' : 'Got it'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
