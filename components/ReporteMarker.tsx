@@ -35,12 +35,12 @@ const getReporteIcon = (tipo: string) => {
 
   const colores: Record<string, string> = {
     'lleno': '#ef4444',
-    'vacio': '#22c55e',
-    'demora': '#f97316',
-    'accidente': '#dc2626',
-    'piquete': '#eab308',
-    'inseguridad': '#9333ea',
-    'fantasma': '#6b7280',
+    'vacio': '#10B981',
+    'demora': '#f59e0b',
+    'accidente': '#ef4444',
+    'piquete': '#f59e0b',
+    'inseguridad': '#8b5cf6',
+    'fantasma': '#64748b',
     'desvio': '#3b82f6'
   };
 
@@ -49,25 +49,19 @@ const getReporteIcon = (tipo: string) => {
 
   return L.divIcon({
     html: `
-      <div style="
-        width: 48px;
-        height: 48px;
-        background: ${color};
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-center;
-        font-size: 24px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        border: 3px solid white;
-        transform: rotate(-45deg);
+      <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-[0_4px_20px_rgba(0,0,0,0.4)] border transition-all hover:scale-105" style="
+        background: rgba(30, 41, 59, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 0 15px ${color}33;
+        border-color: ${color}55;
       ">
-        <span style="transform: rotate(45deg);">${emoji}</span>
+        <span class="filter drop-shadow-[0_2px_8px_${color}aa]">${emoji}</span>
       </div>
     `,
     className: 'reporte-marker',
-    iconSize: [48, 48],
-    iconAnchor: [24, 24],
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
   });
 };
 
@@ -94,6 +88,17 @@ const getTipoLabel = (tipo: string) => {
   return labels[tipo] || tipo;
 };
 
+const EMOJIS: Record<string, string> = {
+  'lleno': '🚌',
+  'vacio': '✅',
+  'demora': '⏰',
+  'accidente': '💥',
+  'piquete': '🚧',
+  'inseguridad': '⚠️',
+  'fantasma': '👻',
+  'desvio': '↪️'
+};
+
 export const ReporteMarker: React.FC<ReporteMarkerProps> = ({ reporte, onValidar }) => {
   return (
     <Marker
@@ -106,42 +111,42 @@ export const ReporteMarker: React.FC<ReporteMarkerProps> = ({ reporte, onValidar
       }}
     >
       <Popup maxWidth={300}>
-        <div className="p-2">
-          <div className="flex items-start gap-3 mb-3">
-            <div className="text-3xl">{getReporteIcon(reporte.tipo).match(/>(.*?)</)?.[1] || '📍'}</div>
+        <div className="p-3 bg-obsidian-dark text-slate-100 rounded-xl space-y-3.5 shadow-2xl border border-slate-700/30">
+          <div className="flex items-start gap-3">
+            <div className="text-3xl filter drop-shadow-[0_2px_8px_rgba(99,102,241,0.3)]">{EMOJIS[reporte.tipo] || '📍'}</div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-900">{getTipoLabel(reporte.tipo)}</h3>
-              <p className="text-xs text-slate-500">Línea {reporte.linea} • {getTiempoTranscurrido(reporte.createdAt)}</p>
+              <h3 className="font-bold text-slate-100 text-sm leading-tight">{getTipoLabel(reporte.tipo)}</h3>
+              <p className="text-[10px] text-slate-400 mt-1 font-semibold">Línea {reporte.linea} • {getTiempoTranscurrido(reporte.createdAt)}</p>
             </div>
           </div>
 
           {reporte.comentario && (
-            <p className="text-sm text-slate-700 mb-3 italic">"{reporte.comentario}"</p>
+            <p className="text-xs text-slate-300 leading-relaxed italic border-l-2 border-indigo-500/50 pl-2">"{reporte.comentario}"</p>
           )}
 
           {/* Contadores tipo Waze */}
-          <div className="flex items-center gap-2 mb-3 text-xs">
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+          <div className="flex items-center gap-2 text-[10px] font-bold">
+            <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 rounded-lg border border-indigo-500/10 shadow-sm">
               👍 {reporte.contadores.yoTambien} Yo también
             </span>
             {reporte.contadores.gracias > 0 && (
-              <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+              <span className="px-2 py-1 bg-luminous-green/20 text-luminous-green rounded-lg border border-luminous-green/10 shadow-sm">
                 💚 {reporte.contadores.gracias}
               </span>
             )}
           </div>
 
           {/* Botones de validación */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-1 border-t border-slate-800">
             <button
               onClick={() => onValidar(reporte._id, 'yo_tambien')}
-              className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors"
+              className="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 text-white rounded-lg text-[10px] font-black tracking-wider transition-all active:scale-95 border border-white/10 shadow-[0_2px_8px_rgba(99,102,241,0.25)]"
             >
               👍 Yo también
             </button>
             <button
               onClick={() => onValidar(reporte._id, 'ya_no')}
-              className="flex-1 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition-colors"
+              className="flex-1 px-3 py-2 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg text-[10px] font-black tracking-wider transition-all active:scale-95 border border-white/5"
             >
               ✓ Ya no
             </button>
