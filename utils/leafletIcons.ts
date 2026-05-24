@@ -66,14 +66,6 @@ export const createBusIcon = (bus: BusEntity, isSelected: boolean) => {
       <path d="M 38 19 L 48 16 L 48 26 L 38 29 Z" fill="#E2E8F0" opacity="0.8" />
       <path d="M 39 20 L 47 18 L 47 25 L 39 27 Z" fill="#60A5FA" opacity="0.65" />
       
-      <!-- Pixar Eyes Teaser for Gamification -->
-      <!-- Left Eye -->
-      <ellipse cx="42" cy="23" rx="2" ry="3.5" fill="#000" />
-      <circle cx="41.5" cy="22" r="0.7" fill="#fff" />
-      <!-- Right Eye -->
-      <ellipse cx="45" cy="21.5" rx="2" ry="3.5" fill="#000" />
-      <circle cx="44.5" cy="20.5" r="0.7" fill="#fff" />
-
       <!-- Side Windows (glowing / dark) -->
       <path d="M 14 16 L 20 18 L 20 26 L 14 24 Z" fill="#1E293B" opacity="0.85" />
       <path d="M 22 19 L 28 21 L 28 29 L 22 27 Z" fill="#1E293B" opacity="0.85" />

@@ -20,6 +20,23 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   <stop offset="0%" stopColor="#10B981" />
                   <stop offset="100%" stopColor="#047857" />
                 </linearGradient>
+                <linearGradient id="windowGlintGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+                  <stop offset="30%" stopColor="#ffffff" stopOpacity="0.1" />
+                  <stop offset="50%" stopColor="#ffffff" stopOpacity="0.45" />
+                  <stop offset="70%" stopColor="#ffffff" stopOpacity="0.1" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                </linearGradient>
+                <clipPath id="busWindowsClip">
+                  {/* Windshield */}
+                  <path d="M 44 17 H 51 Q 53 17 53 21 L 53 28 H 44 Z" />
+                  {/* Side Window 1 */}
+                  <rect x="33" y="17" width="8" height="11" rx="1.5" />
+                  {/* Side Window 2 */}
+                  <rect x="22" y="17" width="8" height="11" rx="1.5" />
+                  {/* Side Window 3 */}
+                  <rect x="11" y="17" width="8" height="11" rx="1.5" />
+                </clipPath>
                 <filter id="onboardGlow">
                   <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
                   <feMerge>
@@ -46,20 +63,16 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 {/* Side window 1 */}
                 <rect x="33" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
                 
-                {/* Side window 2 (with Pixar Mascot eyes looking out!) */}
-                <g>
-                  <rect x="22" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
-                  {/* Pixar Eyes looking at the user */}
-                  <ellipse cx="25" cy="22.5" rx="1.5" ry="2.2" fill="#fff" />
-                  <circle cx="25" cy="22.5" r="0.8" fill="#000" />
-                  <ellipse cx="27.5" cy="22.5" rx="1.5" ry="2.2" fill="#fff" />
-                  <circle cx="27.5" cy="22.5" r="0.8" fill="#000" />
-                  <circle cx="24.7" cy="22" r="0.4" fill="#fff" />
-                  <circle cx="27.2" cy="22" r="0.4" fill="#fff" />
-                </g>
+                {/* Side window 2 */}
+                <rect x="22" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
 
                 {/* Side window 3 */}
                 <rect x="11" y="17" width="8" height="11" rx="1.5" fill="#1E293B" opacity="0.9" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
+
+                {/* Glass Window Reflection Glint overlay */}
+                <g clipPath="url(#busWindowsClip)">
+                  <rect x="0" y="12" width="15" height="20" fill="url(#windowGlintGrad)" className="animate-window-glint" />
+                </g>
 
                 {/* Sleek horizontal neon green stripe */}
                 <line x1="8" y1="33" x2="56" y2="33" stroke="#A7F3D0" strokeWidth="1.5" opacity="0.8" />

@@ -164,6 +164,22 @@
       animation: wheel-spin 0.25s linear infinite;
       transform-origin: 48px 46px;
     }
+
+    /* Glass Window reflection glint animation */
+    @keyframes window-glint {
+      0% {
+        transform: translateX(-50px) translateY(-10px) rotate(15deg);
+      }
+      25% {
+        transform: translateX(90px) translateY(-10px) rotate(15deg);
+      }
+      100% {
+        transform: translateX(90px) translateY(-10px) rotate(15deg);
+      }
+    }
+    .animate-window-glint {
+      animation: window-glint 3s ease-in-out infinite;
+    }
   </style>
   <script type="importmap">
 {
