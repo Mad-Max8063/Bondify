@@ -123,6 +123,37 @@
       border-color: rgba(99, 102, 241, 0.6);
       box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
     }
+
+    /* Colectivo custom animations */
+    @keyframes colectivo-bounce {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-3px) rotate(0.5deg);
+      }
+    }
+    .animate-colectivo-bounce {
+      animation: colectivo-bounce 0.8s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+
+    @keyframes wheel-spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .animate-wheel-spin-rear {
+      animation: wheel-spin 0.3s linear infinite;
+      transform-origin: 26px 41px;
+    }
+    .animate-wheel-spin-front {
+      animation: wheel-spin 0.3s linear infinite;
+      transform-origin: 45px 42.5px;
+    }
   </style>
   <script type="importmap">
 {
