@@ -139,7 +139,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
     const submitFeedback = (type: 'safety' | 'time' | 'thanks') => {
         onAddPoints(50);
         setShowFeedbackModal(false);
-        alert("¡Gracias! Sumaste 50 puntos para tu Garage.");
+        alert("¡Gracias! Tu reporte ayuda a toda la comunidad en tiempo real.");
     };
 
     const handleReportChaos = async (type: ReportType) => {
@@ -206,7 +206,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
     };
 
     return (
-        <div className="relative w-full h-full bg-slate-100 overflow-hidden">
+        <div className="relative w-full h-full bg-obsidian overflow-hidden">
 
             {/* Real Google Map */}
             <MapView
@@ -223,12 +223,12 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
 
             {/* Search Bar */}
             <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
-                <div className="bg-white rounded-xl shadow-lg p-3 flex items-center gap-3">
-                    <Search className="text-slate-400" />
+                <div className="glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+                    <Search className="text-slate-400 w-5 h-5" />
                     <input
                         type="text"
                         placeholder="¿Qué línea buscás?"
-                        className="flex-1 outline-none text-slate-700 font-medium"
+                        className="flex-1 bg-transparent outline-none text-slate-100 font-medium placeholder-slate-400 text-sm"
                     />
                 </div>
             </div>
@@ -237,65 +237,69 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
 
             {/* Bottom Sheet / Info Card */}
             {selectedBus && !showFeedbackModal && (
-                <div className="absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl p-5 z-30 animate-in slide-in-from-bottom duration-300 pointer-events-auto">
+                <div className={`absolute bottom-20 left-4 right-4 glass-card rounded-3xl p-5 z-30 animate-in slide-in-from-bottom duration-300 pointer-events-auto border transition-all ${
+                    selectedBus.status === BusStatus.VERIFIED ? 'glow-green border-luminous-green/30' :
+                    selectedBus.status === BusStatus.PROBLEM ? 'glow-red border-red-500/30' :
+                    'border-slate-700/50 shadow-[0_10px_35px_rgba(0,0,0,0.4)]'
+                }`}>
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-2xl font-black text-slate-800">Línea {selectedBus.line}</h2>
+                                <h2 className="text-2xl font-black text-slate-100">Línea {selectedBus.line}</h2>
                                 {selectedBus.status === BusStatus.VERIFIED && (
-                                    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                                        <Shield size={12} /> Verificado
+                                    <span className="bg-luminous-green/20 text-luminous-green text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-[0_0_8px_rgba(16,185,129,0.15)]">
+                                        <Shield size={10} /> Verificado
                                     </span>
                                 )}
                                 {selectedBus.status === BusStatus.GHOST && (
-                                    <span className="bg-slate-100 text-slate-500 text-xs font-bold px-2 py-1 rounded-full">
+                                    <span className="bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-1 rounded-lg">
                                         Datos Oficiales
                                     </span>
                                 )}
                                 {selectedBus.status === BusStatus.PROBLEM && (
-                                    <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                                        <AlertTriangle size={12} /> Problema
+                                    <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.15)]">
+                                        <AlertTriangle size={10} /> Problema
                                     </span>
                                 )}
                             </div>
-                            <p className="text-slate-500 text-sm">Hacia {selectedBus.destination}</p>
+                            <p className="text-slate-400 text-sm mt-0.5">Hacia {selectedBus.destination}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-3xl font-bold text-indigo-600">{selectedBus.arrivalEstimate}'</p>
-                            <p className="text-xs text-slate-400 uppercase font-bold">minutos</p>
+                            <p className="text-3xl font-black text-indigo-400">{selectedBus.arrivalEstimate}'</p>
+                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">minutos</p>
                         </div>
                     </div>
 
                     {selectedBus.status === BusStatus.VERIFIED && (
-                        <div className="bg-green-50 rounded-lg p-3 mb-4 flex items-center gap-3">
-                            <div className="bg-green-200 p-2 rounded-full">
-                                <Users className="w-4 h-4 text-green-700" />
+                        <div className="bg-luminous-green/10 border border-luminous-green/10 rounded-xl p-3 mb-4 flex items-center gap-3">
+                            <div className="bg-luminous-green/20 p-2 rounded-lg">
+                                <Users className="w-4 h-4 text-luminous-green" />
                             </div>
-                            <p className="text-sm text-green-800 font-medium">
-                                <strong>Usuarios a bordo</strong> verificando ubicación
+                            <p className="text-xs text-slate-300 font-medium">
+                                <strong className="text-luminous-green">Usuarios a bordo</strong> compartiendo ubicación en vivo.
                             </p>
                         </div>
                     )}
 
                     {selectedBus.status === BusStatus.PROBLEM && (
-                        <div className="bg-red-50 rounded-lg p-3 mb-4 flex items-center gap-3 border border-red-100">
-                            <div className="bg-red-200 p-2 rounded-full">
-                                <AlertTriangle className="w-4 h-4 text-red-700" />
+                        <div className="bg-red-500/10 border border-red-500/15 rounded-xl p-3 mb-4 flex items-center gap-3">
+                            <div className="bg-red-500/20 p-2 rounded-lg">
+                                <AlertTriangle className="w-4 h-4 text-red-400" />
                             </div>
-                            <p className="text-sm text-red-800 font-medium">
-                                <strong>¡Cuidado!</strong> Se reportó un desperfecto o accidente en esta unidad.
+                            <p className="text-xs text-red-300 font-medium">
+                                <strong className="text-red-400">¡Cuidado!</strong> Reportaron desperfectos o desvíos en esta unidad.
                             </p>
                         </div>
                     )}
 
                     {showStopwatch ? (
                         <div className="flex gap-2">
-                            <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-3 flex items-center justify-between">
+                            <div className="flex-1 bg-red-500/10 border border-red-500/15 rounded-xl p-3 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <Clock className="text-red-500 w-5 h-5 animate-pulse" />
+                                    <Clock className="text-red-400 w-5 h-5 animate-pulse" />
                                     <div>
-                                        <p className="font-bold text-red-700 text-sm">Esperando...</p>
-                                        <p className="text-[10px] text-red-500">Te avisaremos</p>
+                                        <p className="font-bold text-red-400 text-sm">Esperando...</p>
+                                        <p className="text-[9px] text-red-500">Te notificaremos</p>
                                     </div>
                                 </div>
                             </div>
@@ -313,29 +317,29 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
 
             {/* Feedback Modal (Aplauso del Andén) */}
             {showFeedbackModal && (
-                <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 animate-in slide-in-from-bottom pointer-events-auto">
+                <div className="absolute inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="glass-card w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-700/50 animate-in slide-in-from-bottom pointer-events-auto">
                         <div className="text-center">
-                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Check className="w-8 h-8 text-green-600" />
+                            <div className="w-16 h-16 bg-luminous-green/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                                <Check className="w-8 h-8 text-luminous-green" />
                             </div>
-                            <h3 className="text-2xl font-black text-slate-800">¡Llegaste!</h3>
-                            <p className="text-slate-500">¿Cómo estuvo la espera?</p>
+                            <h3 className="text-2xl font-black text-slate-100">¡Llegaste!</h3>
+                            <p className="text-slate-400 text-sm mt-1">¿Cómo estuvo la espera?</p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-2">
-                            <button onClick={() => submitFeedback('safety')} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                        <div className="grid grid-cols-1 gap-2.5">
+                            <button onClick={() => submitFeedback('safety')} className="bg-white/5 border border-white/10 hover:bg-white/10 text-indigo-400 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
                                 🛡️ ¡Esperé seguro!
                             </button>
-                            <button onClick={() => submitFeedback('time')} className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                            <button onClick={() => submitFeedback('time')} className="bg-white/5 border border-white/10 hover:bg-white/10 text-luminous-green p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
                                 ⏱️ ¡Gané tiempo!
                             </button>
-                            <button onClick={() => submitFeedback('thanks')} className="bg-slate-50 hover:bg-slate-100 text-slate-700 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                            <button onClick={() => submitFeedback('thanks')} className="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
                                 🙏 ¡Gracias!
                             </button>
                         </div>
 
-                        <button onClick={() => setShowFeedbackModal(false)} className="w-full py-3 text-slate-400 text-sm font-medium">
+                        <button onClick={() => setShowFeedbackModal(false)} className="w-full py-2 text-slate-500 hover:text-slate-400 text-sm font-medium transition-colors">
                             Omitir
                         </button>
                     </div>
@@ -349,7 +353,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                         mapInstance.setView([userLocation.lat, userLocation.lng], 16);
                     }
                 }}
-                className={`absolute bottom-24 right-4 p-3 rounded-full shadow-lg transition-all z-20 pointer-events-auto ${userLocation ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400'}`}
+                className={`absolute bottom-24 right-4 p-3 rounded-full shadow-lg transition-all z-20 pointer-events-auto border ${userLocation ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)]' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
             >
                 <Navigation className="w-6 h-6" />
             </button>

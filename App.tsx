@@ -7,7 +7,6 @@ import { UserMode, UserRole, UserProfile, GarageState, Routine, DemoAction } fro
 import { INITIAL_GARAGE } from './constants';
 import { Onboarding } from './components/Onboarding';
 import { MapInterface } from './components/MapInterface';
-import { Garage } from './components/Garage';
 import { ProfileSettings } from './components/ProfileSettings';
 import { SmartNudge } from './components/SmartNudge';
 import { DemoControls } from './components/DemoControls';
@@ -20,7 +19,7 @@ import { DesviacionAlert } from './components/DesviacionAlert';
 import { ConfirmarDesvioAlert } from './components/ConfirmarDesvioAlert';
 import { DesvioNotificacion } from './components/DesvioNotificacion';
 import { InstallGuide } from './components/InstallGuide';
-import { Map, Trophy, Power, User, Star, Clock } from 'lucide-react';
+import { Map, Power, User, Star, Clock } from 'lucide-react';
 import { usuariosAPI, colectivosAPI } from './services/api';
 import {
     rotateTripId,
@@ -52,7 +51,6 @@ const App: React.FC = () => {
         isPresentationMode: false
     });
 
-    const [isGarageOpen, setIsGarageOpen] = useState(false);
     const [showProfileSettings, setShowProfileSettings] = useState(false);
     const [showFavoritos, setShowFavoritos] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
@@ -99,10 +97,6 @@ const App: React.FC = () => {
             ...prev,
             mode
         }));
-        // If switching to efficient, ensure gamification UI is closed
-        if (mode === UserMode.EFFICIENT) {
-            setIsGarageOpen(false);
-        }
     };
 
     const handleTogglePresentationMode = () => {
@@ -126,142 +120,8 @@ const App: React.FC = () => {
         setDemoAction({ type: 'GHOST', id: Date.now() });
     };
 
-    const updateBusColor = (color: string) => {
-        setProfile(prev => ({
-            ...prev,
-            garage: { ...prev.garage, busColor: color }
-        }));
-    };
-
-    // Efecto de decaimiento emocional por inactividad (Tamagotchi)
-    useEffect(() => {
-        if (profile.hasOnboarded && profile.garage.accessories.includes('ojitos_vida')) {
-            const horasPasadas = Math.floor((Date.now() - profile.garage.lastCollaboration) / (1000 * 60 * 60));
-            if (horasPasadas > 0) {
-                const decaimiento = horasPasadas * 2;
-                const nuevaFelicidad = Math.max(0, profile.garage.happiness - decaimiento);
-                
-                if (nuevaFelicidad !== profile.garage.happiness) {
-                    setProfile(prev => ({
-                        ...prev,
-                        garage: {
-                            ...prev.garage,
-                            happiness: nuevaFelicidad
-                        }
-                    }));
-                    if (userId) {
-                        usuariosAPI.actualizarGarage(userId, { felicidad: nuevaFelicidad });
-                    }
-                }
-            }
-        }
-    }, [profile.hasOnboarded, profile.garage.accessories, profile.garage.lastCollaboration, profile.garage.happiness, userId]);
-
     const addPoints = async (amount: number) => {
-        if (profile.mode === UserMode.COMMUNITY) {
-            let cobroVida = false;
-            
-            setProfile(prev => {
-                const tieneOjitos = prev.garage.accessories.includes('ojitos_vida');
-                let nuevosAccesorios = [...prev.garage.accessories];
-                let nuevaFelicidad = prev.garage.happiness;
-                
-                if (!tieneOjitos) {
-                    // HITO: ¡Primera colaboración! El colectivo cobra vida
-                    nuevosAccesorios.push('ojitos_vida');
-                    nuevaFelicidad = 50; // Comienza un poco triste/cansado
-                    cobroVida = true;
-                } else {
-                    // Incrementar felicidad por colaborar
-                    nuevaFelicidad = Math.min(100, prev.garage.happiness + 25);
-                }
-
-                return {
-                    ...prev,
-                    garage: {
-                        ...prev.garage,
-                        points: prev.garage.points + amount,
-                        accessories: nuevosAccesorios,
-                        happiness: nuevaFelicidad,
-                        lastCollaboration: Date.now()
-                    }
-                };
-            });
-
-            // Sincronizar con backend
-            if (userId) {
-                await usuariosAPI.actualizarGarage(userId, { 
-                    puntos: amount,
-                    felicidad: profile.garage.accessories.includes('ojitos_vida') ? Math.min(100, profile.garage.happiness + 25) : 50,
-                    ultimaColaboracion: Date.now()
-                });
-            }
-
-            if (cobroVida) {
-                setTimeout(() => {
-                    alert('🎉 ¡TU BONDI COBRÓ VIDA! 🚌👀\n\nAcabas de desbloquear el accesorio tradicional "Ojitos de Parabrisas" por tu primera colaboración.\n\nAl principio se siente un poco triste porque nadie viajaba con él. ¡Colaborá diariamente para ver su sonrisa y enderezar su trompa!');
-                }, 800);
-            }
-        }
-    };
-
-    // Manejar compras de accesorios en el Garage
-    const handleBuyAccessory = async (id: string, cost: number) => {
-        if (profile.garage.points < cost) {
-            alert('❌ No tenés suficientes puntos para comprar este adorno.');
-            return;
-        }
-
-        setProfile(prev => ({
-            ...prev,
-            garage: {
-                ...prev.garage,
-                points: prev.garage.points - cost,
-                accessories: [...prev.garage.accessories, id],
-                happiness: 100, // ¡Comprar accesorios le da felicidad máxima!
-                lastCollaboration: Date.now()
-            }
-        }));
-
-        if (userId) {
-            await usuariosAPI.actualizarGarage(userId, {
-                puntos: -cost,
-                accesorios: [...profile.garage.accessories, id],
-                felicidad: 100,
-                ultimaColaboracion: Date.now()
-            });
-        }
-
-        alert('✨ ¡Adorno comprado! Tu colectivo está rebosante de alegría. +100% de felicidad');
-    };
-
-    // Equipar/Desequipar accesorios ya comprados
-    const handleEquipAccessory = async (id: string) => {
-        setProfile(prev => {
-            const yaEquipado = prev.garage.accessories.includes(id);
-            let nuevosAccesorios = [];
-            
-            if (yaEquipado) {
-                // Desequipar (Excepto los ojitos de parabrisas que no se pueden sacar una vez desbloqueados)
-                if (id === 'ojitos_vida') return prev;
-                nuevosAccesorios = prev.garage.accessories.filter(accId => accId !== id);
-            } else {
-                // Equipar
-                nuevosAccesorios = [...prev.garage.accessories, id];
-            }
-
-            if (userId) {
-                usuariosAPI.actualizarGarage(userId, { accesorios: nuevosAccesorios });
-            }
-
-            return {
-                ...prev,
-                garage: {
-                    ...prev.garage,
-                    accessories: nuevosAccesorios
-                }
-            };
-        });
+        console.log(`[Points] +${amount} points for collaborative action.`);
     };
 
     // 1. Hook para verificar desviaciones de la ruta habitual
@@ -402,7 +262,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="h-dynamic w-full flex flex-col bg-slate-100 text-slate-900 font-sans overflow-hidden">
+        <div className="h-dynamic w-full flex flex-col bg-obsidian text-slate-100 font-sans overflow-hidden">
 
             {/* Smart Nudge Popup */}
             {nudgeRoutine && (
@@ -564,18 +424,6 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            {/* Garage Screen Overlay */}
-            {isGarageOpen && profile.mode === UserMode.COMMUNITY && (
-                <Garage
-                    gameState={profile.garage}
-                    onUpdateColor={updateBusColor}
-                    onEquipAccessory={handleEquipAccessory}
-                    onBuyAccessory={handleBuyAccessory}
-                    onClose={() => setIsGarageOpen(false)}
-                    onOpenSettings={() => setShowProfileSettings(true)}
-                />
-            )}
-
             {/* Profile Settings Overlay */}
             {showProfileSettings && (
                 <ProfileSettings
@@ -606,21 +454,20 @@ const App: React.FC = () => {
             )}
 
             {/* Bottom Navigation */}
-            <div className="bg-white border-t border-slate-200 pb-safe pt-3 px-4 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-40">
+            <div className="glass-nav pb-safe pt-3 px-4 z-40 rounded-t-[2rem] border-t-0 shadow-[0_-10px_35px_rgba(0,0,0,0.5)]">
                 <div className="flex items-center justify-around h-16">
 
                     {/* Favoritos Button */}
                     <button
                         onClick={() => {
                             setShowFavoritos(true);
-                            setIsGarageOpen(false);
                             setShowProfileSettings(false);
                             setShowHistorial(false);
                         }}
-                        className={`flex flex-col items-center gap-1 transition-colors ${showFavoritos ? 'text-yellow-600' : 'text-slate-400'}`}
+                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${showFavoritos ? 'text-luminous-amber scale-105' : 'text-slate-400 hover:text-slate-200'}`}
                     >
-                        <div className={`p-1 rounded-full ${showFavoritos ? 'bg-yellow-100' : ''}`}>
-                            <Star className="w-6 h-6" />
+                        <div className={`p-1.5 rounded-xl transition-colors ${showFavoritos ? 'bg-luminous-amber/20 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : ''}`}>
+                            <Star className="w-5 h-5" />
                         </div>
                         <span className="text-[10px] font-bold">Favoritos</span>
                     </button>
@@ -628,10 +475,10 @@ const App: React.FC = () => {
                     {/* Toggle Role Button */}
                     <button
                         onClick={toggleRole}
-                        className={`flex flex-col items-center gap-1 transition-colors ${profile.role === UserRole.TRAVELER ? 'text-green-600' : 'text-slate-400'}`}
+                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${profile.role === UserRole.TRAVELER ? 'text-luminous-green scale-105' : 'text-slate-400 hover:text-slate-200'}`}
                     >
-                        <div className={`p-1 rounded-full ${profile.role === UserRole.TRAVELER ? 'bg-green-100' : ''}`}>
-                            <Power className="w-6 h-6" />
+                        <div className={`p-1.5 rounded-xl transition-colors ${profile.role === UserRole.TRAVELER ? 'bg-luminous-green/20 shadow-[0_0_12px_rgba(16,185,129,0.2)]' : ''}`}>
+                            <Power className="w-5 h-5" />
                         </div>
                         <span className="text-[10px] font-bold">
                             {profile.role === UserRole.TRAVELER ? 'Viajando' : 'Esperando'}
@@ -639,17 +486,16 @@ const App: React.FC = () => {
                     </button>
 
                     {/* Main Map Button (Center) */}
-                    <div className="relative -top-6">
+                    <div className="relative -top-7">
                         <button
                             onClick={() => {
-                                setIsGarageOpen(false);
                                 setShowProfileSettings(false);
                                 setShowFavoritos(false);
                                 setShowHistorial(false);
                             }}
-                            className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-xl shadow-slate-900/30 active:scale-95 transition-transform border-4 border-slate-100"
+                            className="w-15 h-15 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.6)] active:scale-95 transition-all border-[3px] border-obsidian-light"
                         >
-                            <Map className="w-7 h-7" />
+                            <Map className="w-6 h-6" />
                         </button>
                     </div>
 
@@ -657,46 +503,30 @@ const App: React.FC = () => {
                     <button
                         onClick={() => {
                             setShowHistorial(true);
-                            setIsGarageOpen(false);
                             setShowProfileSettings(false);
                             setShowFavoritos(false);
                         }}
-                        className={`flex flex-col items-center gap-1 transition-colors ${showHistorial ? 'text-purple-600' : 'text-slate-400'}`}
+                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${showHistorial ? 'text-purple-400 scale-105' : 'text-slate-400 hover:text-slate-200'}`}
                     >
-                        <div className={`p-1 rounded-full ${showHistorial ? 'bg-purple-100' : ''}`}>
-                            <Clock className="w-6 h-6" />
+                        <div className={`p-1.5 rounded-xl transition-colors ${showHistorial ? 'bg-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.2)]' : ''}`}>
+                            <Clock className="w-5 h-5" />
                         </div>
                         <span className="text-[10px] font-bold">Historial</span>
                     </button>
 
-                    {/* Garage/Profile Button */}
+                    {/* Profile Button */}
                     <button
                         onClick={() => {
-                            if (profile.mode === UserMode.COMMUNITY) {
-                                setIsGarageOpen(true);
-                            } else {
-                                setShowProfileSettings(true);
-                            }
+                            setShowProfileSettings(true);
                             setShowFavoritos(false);
                             setShowHistorial(false);
                         }}
-                        className={`flex flex-col items-center gap-1 transition-colors ${isGarageOpen || showProfileSettings ? 'text-indigo-600' : 'text-slate-400'}`}
+                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${showProfileSettings ? 'text-blue-400 scale-105' : 'text-slate-400 hover:text-slate-200'}`}
                     >
-                        {profile.mode === UserMode.COMMUNITY ? (
-                            <>
-                                <div className={`p-1 rounded-full ${isGarageOpen ? 'bg-indigo-100' : ''}`}>
-                                    <Trophy className="w-6 h-6" />
-                                </div>
-                                <span className="text-[10px] font-bold">Garage</span>
-                            </>
-                        ) : (
-                            <>
-                                <div className={`p-1 rounded-full ${showProfileSettings ? 'bg-indigo-100' : ''}`}>
-                                    <User className="w-6 h-6" />
-                                </div>
-                                <span className="text-[10px] font-bold">Perfil</span>
-                            </>
-                        )}
+                        <div className={`p-1.5 rounded-xl transition-colors ${showProfileSettings ? 'bg-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.2)]' : ''}`}>
+                            <User className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-bold">Perfil</span>
                     </button>
                 </div>
             </div>

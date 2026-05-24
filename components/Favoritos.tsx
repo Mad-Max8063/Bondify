@@ -62,23 +62,25 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in">
+      <div className="glass-card border border-slate-700/50 rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.5)] w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col animate-in zoom-in-95">
         {/* Header */}
-        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-6 text-white">
+        <div className="bg-gradient-to-r from-yellow-500/80 to-orange-500/80 backdrop-blur-xl p-6 text-white border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Star className="w-8 h-8" fill="currentColor" />
+              <div className="p-2.5 bg-white/15 rounded-xl shadow-inner border border-white/10">
+                <Star className="w-6 h-6 text-yellow-300" fill="currentColor" />
+              </div>
               <div>
-                <h2 className="text-2xl font-bold">Mis Favoritos</h2>
-                <p className="text-sm text-yellow-100">
+                <h2 className="text-2xl font-bold text-slate-100">Mis Favoritos</h2>
+                <p className="text-xs text-yellow-100/90 font-medium">
                   {favoritos.length} líneas guardadas
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center transition-colors text-slate-200"
             >
               ✕
             </button>
@@ -89,15 +91,15 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent mx-auto"></div>
-              <p className="text-slate-500 mt-4">Cargando favoritos...</p>
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-yellow-500 border-t-transparent mx-auto"></div>
+              <p className="text-slate-400 mt-4 text-sm font-semibold">Cargando favoritos...</p>
             </div>
           ) : favoritos.length === 0 ? (
             <div className="text-center py-8">
-              <Star className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 text-lg">No tenés favoritos aún</p>
-              <p className="text-slate-400 text-sm mt-2">
-                Agregá tus líneas más usadas para acceso rápido
+              <Star className="w-14 h-14 text-slate-600 mx-auto mb-4 animate-pulse" />
+              <p className="text-slate-300 text-lg font-bold">No tenés favoritos aún</p>
+              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                Agregá tus líneas más usadas para acceder rápidamente a su recorrido y reportes
               </p>
             </div>
           ) : (
@@ -105,24 +107,24 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
               {favoritos.map((fav, index) => (
                 <div
                   key={index}
-                  className="bg-slate-50 rounded-xl p-4 flex items-center justify-between hover:bg-slate-100 transition-colors"
+                  className="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:bg-white/10 transition-colors shadow-inner"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-[0_4px_12px_rgba(99,102,241,0.25)] border border-white/10">
                       {fav.linea}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">Línea {fav.linea}</p>
-                      <p className="text-sm text-slate-500">
-                        {fav.ramal !== 'default' ? fav.ramal : 'Todas las ramales'}
+                      <p className="font-bold text-slate-200">Línea {fav.linea}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                        {fav.ramal !== 'default' ? fav.ramal : 'Todos los ramales'}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => eliminarFavorito(fav.linea, fav.ramal)}
-                    className="w-10 h-10 rounded-full bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-400 flex items-center justify-center transition-colors border border-red-500/10 shadow-sm"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -131,33 +133,33 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
 
           {/* Agregar nuevo favorito */}
           {showAdd ? (
-            <div className="mt-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-4 border-2 border-yellow-200">
-              <p className="font-bold text-slate-900 mb-3">Agregar Nueva Línea</p>
+            <div className="bg-white/5 p-5 rounded-2xl border border-yellow-500/30 shadow-inner mt-6 space-y-4">
+              <p className="font-bold text-slate-200 text-sm">Agregar Nueva Línea</p>
               <div className="space-y-3">
                 <input
                   type="text"
                   value={nuevaLinea}
                   onChange={(e) => setNuevaLinea(e.target.value)}
                   placeholder="Número de línea (ej: 152)"
-                  className="w-full px-4 py-2 rounded-lg border-2 border-yellow-300 focus:border-yellow-500 focus:outline-none"
+                  className="glass-input px-4 py-2.5 w-full text-sm placeholder-slate-500 focus:border-yellow-500/60"
                 />
                 <input
                   type="text"
                   value={nuevoRamal}
                   onChange={(e) => setNuevoRamal(e.target.value)}
                   placeholder="Ramal (opcional)"
-                  className="w-full px-4 py-2 rounded-lg border-2 border-yellow-300 focus:border-yellow-500 focus:outline-none"
+                  className="glass-input px-4 py-2.5 w-full text-sm placeholder-slate-500 focus:border-yellow-500/60"
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-1">
                   <button
                     onClick={agregarFavorito}
-                    className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2 rounded-lg font-bold hover:shadow-lg transition-shadow"
+                    className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-[0_4px_12px_rgba(245,158,11,0.3)] hover:brightness-110 border border-white/10 active:scale-95 transition-all"
                   >
                     Agregar
                   </button>
                   <button
                     onClick={() => setShowAdd(false)}
-                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition-colors"
+                    className="px-4 py-2.5 bg-white/10 text-slate-300 rounded-xl font-bold text-sm border border-white/5 hover:bg-white/20 active:scale-95 transition-all"
                   >
                     Cancelar
                   </button>
@@ -167,7 +169,7 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
           ) : (
             <button
               onClick={() => setShowAdd(true)}
-              className="w-full mt-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-shadow"
+              className="w-full mt-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(245,158,11,0.3)] border border-white/10 hover:brightness-110 active:scale-95 transition-all text-sm"
             >
               <Plus className="w-5 h-5" />
               Agregar Favorito
