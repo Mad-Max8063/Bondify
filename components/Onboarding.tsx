@@ -1,14 +1,42 @@
 import React from 'react';
 import { UserMode } from '../types';
 import { Zap, Users, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface OnboardingProps {
   onComplete: (mode: UserMode) => void;
 }
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+  const { t, language, setLanguage } = useLanguage();
+
   return (
-    <div className="h-dynamic bg-obsidian flex flex-col p-6 items-center justify-center overflow-y-auto text-slate-100">
+    <div className="h-dynamic bg-obsidian flex flex-col p-6 items-center justify-center overflow-y-auto text-slate-100 relative">
+      
+      {/* Sleek Floating Language Selector */}
+      <div className="absolute top-4 right-4 z-50 flex gap-1 bg-white/5 border border-white/10 rounded-full p-1 shadow-md backdrop-blur-md">
+        <button
+          onClick={() => setLanguage('es')}
+          className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+            language === 'es'
+              ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          ES
+        </button>
+        <button
+          onClick={() => setLanguage('en')}
+          className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+            language === 'en'
+              ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          EN
+        </button>
+      </div>
+
       <div className="w-full max-w-md space-y-6">
 
         {/* Side-Profile Animated Colectivo Preview Header */}
@@ -115,13 +143,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           </div>
           <div>
             <h1 className="text-3xl font-black text-slate-100 tracking-tight">Bondify</h1>
-            <p className="text-slate-400 text-sm mt-1">Viajá mejor, esperá menos.</p>
+            <p className="text-slate-400 text-sm mt-1">{t('app_subtitle')}</p>
           </div>
         </div>
 
         {/* Option Selection Block */}
         <div className="space-y-4 pt-4">
-          <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">¿Cómo querés usar la app?</p>
+          <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{t('onboarding_question')}</p>
 
           {/* Option A: Efficient Mode */}
           <button
@@ -132,11 +160,11 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl group-hover:bg-white/10 transition-all shadow-inner">
                 <Zap className="w-5 h-5 text-slate-300" />
               </div>
-              <span className="text-[10px] font-bold text-slate-400 bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg uppercase tracking-wider">Simple</span>
+              <span className="text-[10px] font-bold text-slate-400 bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg uppercase tracking-wider">{t('onboarding_efficient_badge')}</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-200 mb-1">Modo Eficiente</h3>
+            <h3 className="text-lg font-bold text-slate-200 mb-1">{t('onboarding_efficient_title')}</h3>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Quiero la herramienta de consulta rápida. Solo dame los horarios de arribo precisos, alertas de mapa y cronómetro de seguridad.
+              {t('onboarding_efficient_desc')}
             </p>
           </button>
 
@@ -151,11 +179,11 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <div className="p-2.5 bg-indigo-500/25 border border-indigo-500/20 rounded-xl">
                 <Users className="w-5 h-5 text-indigo-400" />
               </div>
-              <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-indigo-500/10 shadow-inner">Recomendado</span>
+              <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-indigo-500/10 shadow-inner">{t('onboarding_community_badge')}</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-200 mb-1 relative z-10">Modo Comunidad</h3>
+            <h3 className="text-lg font-bold text-slate-200 mb-1 relative z-10">{t('onboarding_community_title')}</h3>
             <p className="text-slate-400 text-xs leading-relaxed relative z-10">
-              ¡Sumate al tránsito colaborativo! Reportá incidentes en vivo, validá desvíos de colectivos y viajá más seguro junto a otros pasajeros en tiempo real.
+              {t('onboarding_community_desc')}
             </p>
           </button>
         </div>
@@ -165,7 +193,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           onClick={() => onComplete(UserMode.GUEST)}
           className="w-full mt-4 p-3 rounded-xl border border-dashed border-slate-700/60 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 hover:bg-white/5 transition-all flex items-center justify-center gap-2 group active:scale-98"
         >
-          <span className="text-xs font-bold tracking-wider uppercase group-hover:underline">Ingresar como Invitado</span>
+          <span className="text-xs font-bold tracking-wider uppercase group-hover:underline">{t('onboarding_guest_btn')}</span>
         </button>
       </div>
 
@@ -173,7 +201,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       <div className="text-center pt-8">
         <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 font-medium">
           <ShieldCheck size={12} />
-          <span>Privacidad garantizada • Conexión cifrada de geolocalización</span>
+          <span>{t('onboarding_privacy')}</span>
         </div>
       </div>
     </div>

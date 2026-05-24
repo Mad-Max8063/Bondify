@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, TrendingUp, Award, MapPin } from 'lucide-react';
 import { usuariosAPI } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface HistorialProps {
   userId: string;
@@ -8,6 +9,7 @@ interface HistorialProps {
 }
 
 export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
+  const { language } = useLanguage();
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,10 +33,12 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mx-auto"></div>
-          <p className="text-slate-600 mt-4">Cargando historial...</p>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center">
+        <div className="glass-card rounded-2xl p-8 border border-slate-700/50">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mx-auto"></div>
+          <p className="text-slate-400 mt-4 text-sm font-semibold">
+            {language === 'es' ? 'Cargando historial...' : 'Loading history...'}
+          </p>
         </div>
       </div>
     );
@@ -51,9 +55,11 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
                 <Clock className="w-6 h-6 text-indigo-300" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-100">Mi Historial</h2>
+                <h2 className="text-2xl font-bold text-slate-100">
+                  {language === 'es' ? 'Mi Historial' : 'My History'}
+                </h2>
                 <p className="text-xs text-indigo-100/90 font-medium">
-                  Tus registros de viaje colaborativo
+                  {language === 'es' ? 'Tus registros de viaje colaborativo' : 'Your collaborative trip logs'}
                 </p>
               </div>
             </div>
@@ -74,7 +80,9 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
               <div className="flex items-center gap-1.5 mb-1.5 text-indigo-400">
                 <TrendingUp className="w-4 h-4" />
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Viajes</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {language === 'es' ? 'Viajes' : 'Trips'}
+              </p>
               <p className="text-2xl font-black text-indigo-400 mt-1">
                 {estadisticas?.estadisticas?.viajesRealizados || 0}
               </p>
@@ -84,7 +92,9 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
               <div className="flex items-center gap-1.5 mb-1.5 text-purple-400">
                 <Clock className="w-4 h-4" />
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tiempo</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {language === 'es' ? 'Tiempo' : 'Duration'}
+              </p>
               <p className="text-2xl font-black text-purple-400 mt-1">
                 {estadisticas?.estadisticas?.tiempoTotalViaje || 0}
                 <span className="text-xs font-semibold text-slate-400"> m</span>
@@ -95,7 +105,9 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
               <div className="flex items-center gap-1.5 mb-1.5 text-luminous-green">
                 <MapPin className="w-4 h-4" />
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Validado</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {language === 'es' ? 'Validado' : 'Verified'}
+              </p>
               <p className="text-2xl font-black text-luminous-green mt-1">
                 {estadisticas?.estadisticas?.verificacionesRealizadas || 0}
               </p>
@@ -107,7 +119,7 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
             <div>
               <h3 className="font-bold text-slate-200 text-sm mb-3 flex items-center gap-2 uppercase tracking-wider">
                 <TrendingUp className="w-4 h-4 text-indigo-400" />
-                Líneas Más Usadas
+                {language === 'es' ? 'Líneas Más Usadas' : 'Most Used Routes'}
               </h3>
               <div className="space-y-2">
                 {Object.entries(estadisticas.viajesPorLinea)
@@ -124,7 +136,9 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
                         </div>
                         <span className="font-bold text-slate-200">{linea}</span>
                       </div>
-                      <span className="font-black text-indigo-400 text-sm bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/10">{cantidad} viajes</span>
+                      <span className="font-black text-indigo-400 text-sm bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/10">
+                        {cantidad} {language === 'es' ? 'viajes' : 'trips'}
+                      </span>
                     </div>
                   ))}
               </div>
@@ -136,7 +150,7 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
             <div>
               <h3 className="font-bold text-slate-200 text-sm mb-3 flex items-center gap-2 uppercase tracking-wider">
                 <Clock className="w-4 h-4 text-purple-400" />
-                Viajes Recientes
+                {language === 'es' ? 'Viajes Recientes' : 'Recent Trips'}
               </h3>
               <div className="space-y-2">
                 {estadisticas.historialReciente.map((viaje: any, index: number) => (
@@ -150,16 +164,16 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
                       </div>
                       <div>
                         <p className="font-bold text-slate-200">
-                          Línea {viaje.linea} {viaje.ramal !== 'default' && `(${viaje.ramal})`}
+                          {language === 'es' ? `Línea ${viaje.linea}` : `Line ${viaje.linea}`} {viaje.ramal !== 'default' && `(${viaje.ramal})`}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {new Date(viaje.fecha).toLocaleDateString('es-AR')}
+                          {new Date(viaje.fecha).toLocaleDateString(language === 'es' ? 'es-AR' : 'en-US')}
                         </p>
                       </div>
                     </div>
                     {viaje.verificado && (
                       <span className="text-luminous-green font-bold text-xs bg-luminous-green/20 border border-luminous-green/10 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.15)]">
-                        ✓ Verificado
+                        {language === 'es' ? '✓ Verificado' : '✓ Verified'}
                       </span>
                     )}
                   </div>
@@ -172,9 +186,13 @@ export const Historial: React.FC<HistorialProps> = ({ userId, onClose }) => {
           {(!estadisticas || estadisticas.estadisticas?.viajesRealizados === 0) && (
             <div className="text-center py-8">
               <Clock className="w-14 h-14 text-slate-600 mx-auto mb-4 animate-pulse" />
-              <p className="text-slate-300 text-lg font-bold">Aún no tenés viajes registrados</p>
+              <p className="text-slate-300 text-lg font-bold">
+                {language === 'es' ? 'Aún no tenés viajes registrados' : 'No trips recorded yet'}
+              </p>
               <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-                Comenzá a usar la app y colaborá compartiendo tu viaje para ver tu historial
+                {language === 'es'
+                  ? 'Comenzá a usar la app y colaborá compartiendo tu viaje para ver tu historial.'
+                  : 'Start riding the bus and share your trip anonymously to see your travel stats here.'}
               </p>
             </div>
           )}

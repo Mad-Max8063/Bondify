@@ -20,6 +20,7 @@ import { ConfirmarDesvioAlert } from './components/ConfirmarDesvioAlert';
 import { DesvioNotificacion } from './components/DesvioNotificacion';
 import { InstallGuide } from './components/InstallGuide';
 import { Map, Power, User, Star, Clock } from 'lucide-react';
+import { useLanguage } from './contexts/LanguageContext';
 import { usuariosAPI, colectivosAPI } from './services/api';
 import {
     rotateTripId,
@@ -42,6 +43,7 @@ const getUserId = () => {
 };
 
 const App: React.FC = () => {
+    const { t } = useLanguage();
     const [userId] = useState(getUserId());
     const [profile, setProfile] = useState<UserProfile>({
         mode: UserMode.EFFICIENT,
@@ -469,7 +471,7 @@ const App: React.FC = () => {
                         <div className={`p-1.5 rounded-xl transition-colors ${showFavoritos ? 'bg-luminous-amber/20 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : ''}`}>
                             <Star className="w-5 h-5" />
                         </div>
-                        <span className="text-[10px] font-bold">Favoritos</span>
+                        <span className="text-[10px] font-bold">{t('nav_favorites')}</span>
                     </button>
 
                     {/* Toggle Role Button */}
@@ -481,7 +483,7 @@ const App: React.FC = () => {
                             <Power className="w-5 h-5" />
                         </div>
                         <span className="text-[10px] font-bold">
-                            {profile.role === UserRole.TRAVELER ? 'Viajando' : 'Esperando'}
+                            {profile.role === UserRole.TRAVELER ? t('nav_traveling') : t('nav_waiting')}
                         </span>
                     </button>
 
@@ -511,7 +513,7 @@ const App: React.FC = () => {
                         <div className={`p-1.5 rounded-xl transition-colors ${showHistorial ? 'bg-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.2)]' : ''}`}>
                             <Clock className="w-5 h-5" />
                         </div>
-                        <span className="text-[10px] font-bold">Historial</span>
+                        <span className="text-[10px] font-bold">{t('nav_history')}</span>
                     </button>
 
                     {/* Profile Button */}
@@ -526,7 +528,7 @@ const App: React.FC = () => {
                         <div className={`p-1.5 rounded-xl transition-colors ${showProfileSettings ? 'bg-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.2)]' : ''}`}>
                             <User className="w-5 h-5" />
                         </div>
-                        <span className="text-[10px] font-bold">Perfil</span>
+                        <span className="text-[10px] font-bold">{t('nav_profile')}</span>
                     </button>
                 </div>
             </div>

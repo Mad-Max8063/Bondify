@@ -7,6 +7,7 @@ import { Button } from './Button';
 import { analizarIncidente } from '../services/gemini';
 import { colectivosAPI, checkBackendHealth } from '../services/api';
 import { Search, Navigation, Shield, Clock, Users, AlertTriangle, AlertOctagon, X, Check, Loader2, RouteOff } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface MapInterfaceProps {
     userRole: UserRole;
@@ -16,6 +17,7 @@ interface MapInterfaceProps {
 }
 
 export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoints, demoAction, userLocation }) => {
+    const { t, language } = useLanguage();
     const [buses, setBuses] = useState<BusEntity[]>(MOCK_BUSES);
     const [reports, setReports] = useState<ChaosReport[]>(MOCK_REPORTS);
     const [selectedBus, setSelectedBus] = useState<BusEntity | null>(null);
@@ -227,13 +229,11 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                     <Search className="text-slate-400 w-5 h-5" />
                     <input
                         type="text"
-                        placeholder="¿Qué línea buscás?"
+                        placeholder={t('map_search_placeholder')}
                         className="flex-1 bg-transparent outline-none text-slate-100 font-medium placeholder-slate-400 text-sm"
                     />
                 </div>
             </div>
-
-            {/* Botón de reporte eliminado - ahora se usa WazeReportButton desde App.tsx */}
 
             {/* Bottom Sheet / Info Card */}
             {selectedBus && !showFeedbackModal && (
@@ -245,28 +245,34 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="text-2xl font-black text-slate-100">Línea {selectedBus.line}</h2>
+                                <h2 className="text-2xl font-black text-slate-100">
+                                    {language === 'es' ? `Línea ${selectedBus.line}` : `Line ${selectedBus.line}`}
+                                </h2>
                                 {selectedBus.status === BusStatus.VERIFIED && (
                                     <span className="bg-luminous-green/20 text-luminous-green text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-[0_0_8px_rgba(16,185,129,0.15)]">
-                                        <Shield size={10} /> Verificado
+                                        <Shield size={10} /> {t('map_status_verified')}
                                     </span>
                                 )}
                                 {selectedBus.status === BusStatus.GHOST && (
                                     <span className="bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-1 rounded-lg">
-                                        Datos Oficiales
+                                        {language === 'es' ? 'Datos Oficiales' : 'Official Schedule'}
                                     </span>
                                 )}
                                 {selectedBus.status === BusStatus.PROBLEM && (
                                     <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.15)]">
-                                        <AlertTriangle size={10} /> Problema
+                                        <AlertTriangle size={10} /> {t('map_status_problem')}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-slate-400 text-sm mt-0.5">Hacia {selectedBus.destination}</p>
+                            <p className="text-slate-400 text-sm mt-0.5">
+                                {language === 'es' ? `Hacia ${selectedBus.destination}` : `To ${selectedBus.destination}`}
+                            </p>
                         </div>
                         <div className="text-right">
                             <p className="text-3xl font-black text-indigo-400">{selectedBus.arrivalEstimate}'</p>
-                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">minutos</p>
+                            <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">
+                                {language === 'es' ? 'minutos' : 'minutes'}
+                            </p>
                         </div>
                     </div>
 
@@ -276,7 +282,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                 <Users className="w-4 h-4 text-luminous-green" />
                             </div>
                             <p className="text-xs text-slate-300 font-medium">
-                                <strong className="text-luminous-green">Usuarios a bordo</strong> compartiendo ubicación en vivo.
+                                <strong className="text-luminous-green">{language === 'es' ? 'Usuarios a bordo' : 'Users on board'}</strong> {language === 'es' ? 'compartiendo ubicación en vivo.' : 'sharing live location details.'}
                             </p>
                         </div>
                     )}
@@ -287,7 +293,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                 <AlertTriangle className="w-4 h-4 text-red-400" />
                             </div>
                             <p className="text-xs text-red-300 font-medium">
-                                <strong className="text-red-400">¡Cuidado!</strong> Reportaron desperfectos o desvíos en esta unidad.
+                                <strong className="text-red-400">{language === 'es' ? '¡Cuidado!' : 'Warning!'}</strong> {language === 'es' ? 'Reportaron desperfectos o desvíos en esta unidad.' : 'Active delays or detour routes reported on this bus.'}
                             </p>
                         </div>
                     )}
@@ -298,18 +304,20 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                 <div className="flex items-center gap-3">
                                     <Clock className="text-red-400 w-5 h-5 animate-pulse" />
                                     <div>
-                                        <p className="font-bold text-red-400 text-sm">Esperando...</p>
-                                        <p className="text-[9px] text-red-500">Te notificaremos</p>
+                                        <p className="font-bold text-red-400 text-sm">{language === 'es' ? 'Esperando...' : 'Waiting...'}</p>
+                                        <p className="text-[9px] text-red-500">{language === 'es' ? 'Te notificaremos' : 'We will notify you'}</p>
                                     </div>
                                 </div>
                             </div>
                             <Button variant="community" onClick={handleArrived} className="flex-1">
-                                👋 ¡Ya subí!
+                                {language === 'es' ? '👋 ¡Ya subí!' : '👋 I boarded!'}
                             </Button>
                         </div>
                     ) : (
                         <Button variant={selectedBus.status === BusStatus.PROBLEM ? 'danger' : 'primary'} fullWidth onClick={handleNotifyMe}>
-                            {selectedBus.status === BusStatus.PROBLEM ? 'AVISARME IGUAL' : 'AVISARME CUANDO ESTÉ LLEGANDO'}
+                            {selectedBus.status === BusStatus.PROBLEM 
+                                ? (language === 'es' ? 'AVISARME IGUAL' : 'NOTIFY ME ANYWAY') 
+                                : (language === 'es' ? 'AVISARME CUANDO ESTÉ LLEGANDO' : 'NOTIFY ME ON ARRIVAL')}
                         </Button>
                     )}
                 </div>
@@ -323,24 +331,24 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                             <div className="w-16 h-16 bg-luminous-green/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                                 <Check className="w-8 h-8 text-luminous-green" />
                             </div>
-                            <h3 className="text-2xl font-black text-slate-100">¡Llegaste!</h3>
-                            <p className="text-slate-400 text-sm mt-1">¿Cómo estuvo la espera?</p>
+                            <h3 className="text-2xl font-black text-slate-100">{language === 'es' ? '¡Llegaste!' : 'Arrived!'}</h3>
+                            <p className="text-slate-400 text-sm mt-1">{language === 'es' ? '¿Cómo estuvo la espera?' : 'How was the wait?'}</p>
                         </div>
 
                         <div className="grid grid-cols-1 gap-2.5">
                             <button onClick={() => submitFeedback('safety')} className="bg-white/5 border border-white/10 hover:bg-white/10 text-indigo-400 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
-                                🛡️ ¡Esperé seguro!
+                                {language === 'es' ? '🛡️ ¡Esperé seguro!' : '🛡️ I felt safe!'}
                             </button>
                             <button onClick={() => submitFeedback('time')} className="bg-white/5 border border-white/10 hover:bg-white/10 text-luminous-green p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
-                                ⏱️ ¡Gané tiempo!
+                                {language === 'es' ? '⏱️ ¡Gané tiempo!' : '⏱️ Saved time!'}
                             </button>
                             <button onClick={() => submitFeedback('thanks')} className="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 p-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
-                                🙏 ¡Gracias!
+                                {language === 'es' ? '🙏 ¡Gracias!' : '🙏 Thanks!'}
                             </button>
                         </div>
 
                         <button onClick={() => setShowFeedbackModal(false)} className="w-full py-2 text-slate-500 hover:text-slate-400 text-sm font-medium transition-colors">
-                            Omitir
+                            {language === 'es' ? 'Omitir' : 'Skip'}
                         </button>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Trash2, Plus, Bus } from 'lucide-react';
 import { usuariosAPI } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Favorito {
   linea: string;
@@ -14,6 +15,7 @@ interface FavoritosProps {
 }
 
 export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
+  const { language } = useLanguage();
   const [favoritos, setFavoritos] = useState<Favorito[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [nuevaLinea, setNuevaLinea] = useState('');
@@ -72,9 +74,11 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
                 <Star className="w-6 h-6 text-yellow-300" fill="currentColor" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-100">Mis Favoritos</h2>
+                <h2 className="text-2xl font-bold text-slate-100">
+                  {language === 'es' ? 'Mis Favoritos' : 'My Favorites'}
+                </h2>
                 <p className="text-xs text-yellow-100/90 font-medium">
-                  {favoritos.length} líneas guardadas
+                  {favoritos.length} {language === 'es' ? 'líneas guardadas' : 'saved routes'}
                 </p>
               </div>
             </div>
@@ -92,14 +96,20 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-10 w-10 border-4 border-yellow-500 border-t-transparent mx-auto"></div>
-              <p className="text-slate-400 mt-4 text-sm font-semibold">Cargando favoritos...</p>
+              <p className="text-slate-400 mt-4 text-sm font-semibold">
+                {language === 'es' ? 'Cargando favoritos...' : 'Loading favorites...'}
+              </p>
             </div>
           ) : favoritos.length === 0 ? (
             <div className="text-center py-8">
               <Star className="w-14 h-14 text-slate-600 mx-auto mb-4 animate-pulse" />
-              <p className="text-slate-300 text-lg font-bold">No tenés favoritos aún</p>
+              <p className="text-slate-300 text-lg font-bold">
+                {language === 'es' ? 'No tenés favoritos aún' : 'No favorites saved yet'}
+              </p>
               <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-                Agregá tus líneas más usadas para acceder rápidamente a su recorrido y reportes
+                {language === 'es' 
+                  ? 'Agregá tus líneas más usadas para acceder rápidamente a su recorrido y reportes.'
+                  : 'Save your most active routes to quickly check their current status and live reports.'}
               </p>
             </div>
           ) : (
@@ -114,9 +124,11 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
                       {fav.linea}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-200">Línea {fav.linea}</p>
+                      <p className="font-bold text-slate-200">
+                        {language === 'es' ? `Línea ${fav.linea}` : `Line ${fav.linea}`}
+                      </p>
                       <p className="text-xs text-slate-400 mt-0.5 font-medium">
-                        {fav.ramal !== 'default' ? fav.ramal : 'Todos los ramales'}
+                        {fav.ramal !== 'default' ? fav.ramal : (language === 'es' ? 'Todos los ramales' : 'All branches')}
                       </p>
                     </div>
                   </div>
@@ -134,20 +146,22 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
           {/* Agregar nuevo favorito */}
           {showAdd ? (
             <div className="bg-white/5 p-5 rounded-2xl border border-yellow-500/30 shadow-inner mt-6 space-y-4">
-              <p className="font-bold text-slate-200 text-sm">Agregar Nueva Línea</p>
+              <p className="font-bold text-slate-200 text-sm">
+                {language === 'es' ? 'Agregar Nueva Línea' : 'Add New Route'}
+              </p>
               <div className="space-y-3">
                 <input
                   type="text"
                   value={nuevaLinea}
                   onChange={(e) => setNuevaLinea(e.target.value)}
-                  placeholder="Número de línea (ej: 152)"
+                  placeholder={language === 'es' ? 'Número de línea (ej: 152)' : 'Route number (e.g., 152)'}
                   className="glass-input px-4 py-2.5 w-full text-sm placeholder-slate-500 focus:border-yellow-500/60"
                 />
                 <input
                   type="text"
                   value={nuevoRamal}
                   onChange={(e) => setNuevoRamal(e.target.value)}
-                  placeholder="Ramal (opcional)"
+                  placeholder={language === 'es' ? 'Ramal (opcional)' : 'Branch / Destination (optional)'}
                   className="glass-input px-4 py-2.5 w-full text-sm placeholder-slate-500 focus:border-yellow-500/60"
                 />
                 <div className="flex gap-2 pt-1">
@@ -155,13 +169,13 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
                     onClick={agregarFavorito}
                     className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-[0_4px_12px_rgba(245,158,11,0.3)] hover:brightness-110 border border-white/10 active:scale-95 transition-all"
                   >
-                    Agregar
+                    {language === 'es' ? 'Agregar' : 'Add'}
                   </button>
                   <button
                     onClick={() => setShowAdd(false)}
                     className="px-4 py-2.5 bg-white/10 text-slate-300 rounded-xl font-bold text-sm border border-white/5 hover:bg-white/20 active:scale-95 transition-all"
                   >
-                    Cancelar
+                    {language === 'es' ? 'Cancelar' : 'Cancel'}
                   </button>
                 </div>
               </div>
@@ -172,7 +186,7 @@ export const Favoritos: React.FC<FavoritosProps> = ({ userId, onClose }) => {
               className="w-full mt-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_4px_15px_rgba(245,158,11,0.3)] border border-white/10 hover:brightness-110 active:scale-95 transition-all text-sm"
             >
               <Plus className="w-5 h-5" />
-              Agregar Favorito
+              {language === 'es' ? 'Agregar Favorito' : 'Add Favorite'}
             </button>
           )}
         </div>

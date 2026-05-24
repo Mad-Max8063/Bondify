@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserMode, Routine } from '../types';
 import { Settings, Zap, Users, X, Clock, Plus, Trash2, Shield, AlertTriangle, ExternalLink } from 'lucide-react';
 import { deleteAllUserData, getStoredDataSummary } from '../utils/privacy';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProfileSettingsProps {
     currentMode: UserMode;
@@ -14,6 +15,7 @@ interface ProfileSettingsProps {
 }
 
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, routines = [], onModeChange, onUpdateRoutines, onClose, isPresentationMode, onTogglePresentationMode }) => {
+    const { t, language, setLanguage } = useLanguage();
     const [newLine, setNewLine] = useState('');
     const [newTime, setNewTime] = useState('');
     const [newReturnTime, setNewReturnTime] = useState('');
@@ -52,18 +54,45 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     <div className="bg-white/5 border border-white/10 p-3 rounded-xl shadow-inner">
                         <Settings className="w-6 h-6 text-slate-300" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-100">Configuración</h2>
+                    <h2 className="text-xl font-bold text-slate-100">{t('profile_title')}</h2>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
+                    {/* Language Selector */}
+                    <div className="space-y-2 pb-2">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Idioma / Language</p>
+                        <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 shadow-inner w-full">
+                            <button
+                                onClick={() => setLanguage('es')}
+                                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    language === 'es'
+                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                Castellano (ARG)
+                            </button>
+                            <button
+                                onClick={() => setLanguage('en')}
+                                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    language === 'en'
+                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                            >
+                                English (US)
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Guest Mode Indicator */}
                     {currentMode === UserMode.GUEST && (
                         <div className="bg-orange-500/10 border border-orange-500/20 p-3.5 rounded-xl flex items-center gap-3 mb-4">
                             <Users className="w-5 h-5 text-orange-400" />
                             <div>
-                                <p className="font-bold text-orange-300 text-sm">Modo Invitado</p>
+                                <p className="font-bold text-orange-300 text-sm">{language === 'es' ? 'Modo Invitado' : 'Guest Mode'}</p>
                                 <p className="text-[10px] text-orange-400 leading-tight">
-                                    Estás en una sesión temporal. Los datos no se guardarán al salir.
+                                    {language === 'es' ? 'Estás en una sesión temporal. Los datos no se guardarán al salir.' : 'You are in a temporary guest session. Your data will not be saved.'}
                                 </p>
                             </div>
                         </div>
@@ -71,7 +100,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
 
                     {/* Mode Selection */}
                     <div className="space-y-3">
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Modo de uso</p>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t('profile_usage_mode')}</p>
                         <button
                             onClick={() => onModeChange(UserMode.EFFICIENT)}
                             className={`w-full p-4 rounded-2xl flex items-center justify-between border transition-all ${currentMode === UserMode.EFFICIENT ? 'border-slate-500 bg-white/10' : 'border-transparent bg-white/5 hover:bg-white/10'}`}
@@ -81,8 +110,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                     <Zap className="w-5 h-5 text-slate-300" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="font-bold text-slate-200">Modo Eficiente</p>
-                                    <p className="text-xs text-slate-400">Solo datos del mapa y horarios</p>
+                                    <p className="font-bold text-slate-200">{t('onboarding_efficient_title')}</p>
+                                    <p className="text-xs text-slate-400">
+                                        {language === 'es' ? 'Solo datos del mapa y horarios' : 'Map details and schedule times only'}
+                                    </p>
                                 </div>
                             </div>
                         </button>
@@ -96,8 +127,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                     <Users className="w-5 h-5 text-indigo-400" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="font-bold text-slate-200">Modo Comunidad</p>
-                                    <p className="text-xs text-slate-400">Reportar y validar incidentes en vivo</p>
+                                    <p className="font-bold text-slate-200">{t('onboarding_community_title')}</p>
+                                    <p className="text-xs text-slate-400">
+                                        {language === 'es' ? 'Reportar y validar incidentes en vivo' : 'Report and validate live incidents'}
+                                    </p>
                                 </div>
                             </div>
                         </button>
@@ -107,26 +140,34 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     <div className="space-y-3 pt-4 border-t border-slate-800">
                         <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-indigo-400" />
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Mis Rutinas (Ida y Vuelta)</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                                {language === 'es' ? 'Mis Rutinas (Ida y Vuelta)' : 'My Routines (Outbound / Return)'}
+                            </p>
                         </div>
 
                         <div className="bg-white/5 border border-white/5 p-3 rounded-2xl space-y-3">
                             {routines.map(routine => (
                                 <div key={routine.id} className="bg-obsidian-dark border border-slate-800 p-3 rounded-xl shadow-sm">
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <p className="font-bold text-slate-200">Línea {routine.line}</p>
+                                        <p className="font-bold text-slate-200">
+                                            {language === 'es' ? `Línea ${routine.line}` : `Line ${routine.line}`}
+                                        </p>
                                         <button onClick={() => handleDeleteRoutine(routine.id)} className="text-slate-500 hover:text-red-400 transition-colors">
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
                                     <div className="flex gap-4 text-xs">
                                         <div className="flex items-center gap-1">
-                                            <span className="font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded text-[10px]">Ida</span>
+                                            <span className="font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded text-[10px]">
+                                                {language === 'es' ? 'Ida' : 'Outbound'}
+                                            </span>
                                             <span className="text-slate-300 font-semibold">{routine.time} hs</span>
                                         </div>
                                         {routine.returnTime && (
                                             <div className="flex items-center gap-1">
-                                                <span className="font-bold bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded text-[10px]">Vuelta</span>
+                                                <span className="font-bold bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded text-[10px]">
+                                                    {language === 'es' ? 'Vuelta' : 'Return'}
+                                                </span>
                                                 <span className="text-slate-300 font-semibold">{routine.returnTime} hs</span>
                                             </div>
                                         )}
@@ -137,14 +178,16 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                             <div className="flex flex-col gap-2 pt-2">
                                 <input
                                     type="text"
-                                    placeholder="Línea (ej: 60)"
+                                    placeholder={language === 'es' ? 'Línea (ej: 60)' : 'Line (e.g. 60)'}
                                     value={newLine}
                                     onChange={e => setNewLine(e.target.value)}
                                     className="glass-input p-2.5 text-sm"
                                 />
                                 <div className="flex gap-2">
                                     <div className="flex-1">
-                                        <label className="text-[9px] text-slate-500 font-black uppercase tracking-wider ml-1">Ida</label>
+                                        <label className="text-[9px] text-slate-500 font-black uppercase tracking-wider ml-1">
+                                            {language === 'es' ? 'Ida' : 'Outbound'}
+                                        </label>
                                         <input
                                             type="time"
                                             value={newTime}
@@ -153,7 +196,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-[9px] text-slate-500 font-black uppercase tracking-wider ml-1">Vuelta (Opcional)</label>
+                                        <label className="text-[9px] text-slate-500 font-black uppercase tracking-wider ml-1">
+                                            {language === 'es' ? 'Vuelta (Opcional)' : 'Return (Optional)'}
+                                        </label>
                                         <input
                                             type="time"
                                             value={newReturnTime}
@@ -179,7 +224,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     <div className="space-y-4 pt-4 border-t border-slate-800">
                         <div className="flex items-center gap-2">
                             <Shield className="w-4 h-4 text-emerald-400" />
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Privacidad y Datos</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                                {language === 'es' ? 'Privacidad y Datos' : 'Privacy & Data'}
+                            </p>
                         </div>
 
                         <div className="space-y-2.5">
@@ -191,7 +238,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                             >
                                 <div className="flex items-center gap-3">
                                     <Shield className="w-4 h-4 text-slate-400" />
-                                    <span className="text-sm font-bold text-slate-300">Política de Privacidad</span>
+                                    <span className="text-sm font-bold text-slate-300">
+                                        {language === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}
+                                    </span>
                                 </div>
                                 <ExternalLink size={14} className="text-slate-500" />
                             </a>
@@ -199,21 +248,28 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                             <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-3 shadow-inner">
                                 <div className="flex items-center gap-2 text-red-400 font-bold">
                                     <AlertTriangle size={16} />
-                                    <p className="text-[10px] uppercase tracking-widest font-black">Zona de Riesgo</p>
+                                    <p className="text-[10px] uppercase tracking-widest font-black">
+                                        {language === 'es' ? 'Zona de Riesgo' : 'Danger Zone'}
+                                    </p>
                                 </div>
                                 <p className="text-[10px] text-red-400/90 leading-relaxed font-medium">
-                                    Esto eliminará permanentemente tus favoritos, rutinas y ID anónimo de este dispositivo de forma definitiva.
+                                    {language === 'es' 
+                                        ? 'Esto eliminará permanentemente tus favoritos, rutinas y ID anónimo de este dispositivo de forma definitiva.'
+                                        : 'This will permanently delete your saved favorites, routine paths, and anonymous user ID from this browser.'}
                                 </p>
                                 <button
                                     onClick={() => {
-                                        if (confirm('¿Estás seguro de que querés borrar todos tus datos locales? Esta acción no se puede deshacer.')) {
+                                        const confirmText = language === 'es' 
+                                            ? '¿Estás seguro de que querés borrar todos tus datos locales? Esta acción no se puede deshacer.'
+                                            : 'Are you sure you want to delete all local user data? This action is irreversible.';
+                                        if (confirm(confirmText)) {
                                             deleteAllUserData();
                                             window.location.reload();
                                         }
                                     }}
                                     className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] active:scale-95"
                                 >
-                                    Borrar mis datos locales
+                                    {language === 'es' ? 'Borrar mis datos locales' : 'Clear my local data'}
                                 </button>
                             </div>
                         </div>
@@ -226,8 +282,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                         <div className="flex items-center gap-2">
                             <span className="text-xl">🎥</span>
                             <div>
-                                <p className="font-bold text-slate-200 text-sm">Modo Presentación</p>
-                                <p className="text-[10px] text-slate-400">Controles simuladores demo</p>
+                                <p className="font-bold text-slate-200 text-sm">
+                                    {language === 'es' ? 'Modo Presentación' : 'Presentation Mode'}
+                                </p>
+                                <p className="text-[10px] text-slate-400">
+                                    {language === 'es' ? 'Controles simuladores demo' : 'Demo simulator controls'}
+                                </p>
                             </div>
                         </div>
                         <button
@@ -240,7 +300,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                 )}
 
                 <p className="mt-8 text-center text-[10px] text-slate-500 font-medium">
-                    Podés cambiar esto cuando quieras.
+                    {language === 'es' ? 'Podés cambiar esto cuando quieras.' : 'You can change this at any time.'}
                 </p>
             </div>
         </div>
