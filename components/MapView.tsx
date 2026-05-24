@@ -52,11 +52,19 @@ function MapController({ buses }: { buses: BusEntity[] }) {
   return null;
 }
 
-// Componente para exponer la instancia del mapa
+// Componente para exponer la instancia del mapa y solucionar bugs de renderizado
 function MapEventListener({ onReady }: { onReady?: (map: L.Map) => void }) {
   const map = useMap();
   useEffect(() => {
     if (onReady) onReady(map);
+    
+    // Forzar redimensionamiento al montar para solucionar el bug del mapa cortado a la mitad
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+      console.log('🗺️ Leaflet: invalidateSize ejecutado para corregir dimensiones.');
+    }, 200);
+
+    return () => clearTimeout(timer);
   }, [map, onReady]);
   return null;
 }

@@ -86,12 +86,12 @@ const getTileConfig = (): TileConfig => {
     }
 };
 
-// Configuración por defecto de OpenStreetMap (gratuito, sin límites estrictos)
+// Configuración de CartoDB Voyager (Gratuito, alto rendimiento por CDN y estética premium)
 const getOpenStreetMapConfig = (): TileConfig => ({
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 19,
-    subdomains: ['a', 'b', 'c']
+    subdomains: ['a', 'b', 'c', 'd']
 });
 
 // Estilos de mapa disponibles para Mapbox

@@ -53,6 +53,8 @@ export interface GarageState {
   points: number;
   busColor: string;
   accessories: string[];
+  happiness: number; // 0 a 100 (Felicidad del Tamagotchi)
+  lastCollaboration: number; // Timestamp de la última acción colaborativa
 }
 
 export interface Routine {

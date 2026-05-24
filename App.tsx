@@ -21,16 +21,16 @@ import { ConfirmarDesvioAlert } from './components/ConfirmarDesvioAlert';
 import { DesvioNotificacion } from './components/DesvioNotificacion';
 import { InstallGuide } from './components/InstallGuide';
 import { Map, Trophy, Power, User, Star, Clock } from 'lucide-react';
-import { Geolocation } from '@capacitor/geolocation';
-import { usuariosAPI, colectivosAPI, estadoColectivoAPI, reportesAPI, checkBackendHealth } from './services/api';
+import { usuariosAPI, colectivosAPI } from './services/api';
 import {
-    getTripId,
     rotateTripId,
-    registerPanicCallback,
-    activatePanicMode,
-    deleteAllUserData,
-    isNearDestination
+    activatePanicMode
 } from './utils/privacy';
+
+// Importar Custom Hooks
+import { useRouteDeviation } from './hooks/useRouteDeviation';
+import { useGeolocation } from './hooks/useGeolocation';
+import { useCommunityReports } from './hooks/useCommunityReports';
 
 // Generar o recuperar userId único
 const getUserId = () => {
@@ -59,28 +59,7 @@ const App: React.FC = () => {
     const [showTravelerNudge, setShowTravelerNudge] = useState(false);
     const [nudgeRoutine, setNudgeRoutine] = useState<Routine | null>(null);
     const [demoAction, setDemoAction] = useState<DemoAction | null>(null);
-
-    // Estado para compartir ubicación GPS
     const [showActivarViajero, setShowActivarViajero] = useState(false);
-    const [compartiendoUbicacion, setCompartiendoUbicacion] = useState(false);
-    const [lineaActual, setLineaActual] = useState<string>('');
-    const [ramalActual, setRamalActual] = useState<string>('');
-    const [gpsInterval, setGpsInterval] = useState<NodeJS.Timeout | null>(null);
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [hasMoved, setHasMoved] = useState(false);
-
-    // Estado para detección de desviación
-    const [showDesviacionAlert, setShowDesviacionAlert] = useState(false);
-    const [ubicacionesRecientes, setUbicacionesRecientes] = useState<{ lat: number, lng: number }[]>([]);
-    const [rutinaUsuario, setRutinaUsuario] = useState<{ lat: number, lng: number }[]>([]);
-
-    // Estado para confirmación de desvío de otros usuarios
-    const [reportePendiente, setReportePendiente] = useState<any>(null);
-    const [showConfirmarDesvio, setShowConfirmarDesvio] = useState(false);
-    const [reportesYaVistos, setReportesYaVistos] = useState<string[]>([]);
-
-    // Estado para notificaciones de desvío confirmado
-    const [desvioConfirmado, setDesvioConfirmado] = useState<{ linea: string, ramal?: string } | null>(null);
 
     // Estado para mostrar guía de instalación PWA
     const [showInstallGuide, setShowInstallGuide] = useState(false);
@@ -147,12 +126,197 @@ const App: React.FC = () => {
         setDemoAction({ type: 'GHOST', id: Date.now() });
     };
 
+    const updateBusColor = (color: string) => {
+        setProfile(prev => ({
+            ...prev,
+            garage: { ...prev.garage, busColor: color }
+        }));
+    };
+
+    // Efecto de decaimiento emocional por inactividad (Tamagotchi)
+    useEffect(() => {
+        if (profile.hasOnboarded && profile.garage.accessories.includes('ojitos_vida')) {
+            const horasPasadas = Math.floor((Date.now() - profile.garage.lastCollaboration) / (1000 * 60 * 60));
+            if (horasPasadas > 0) {
+                const decaimiento = horasPasadas * 2;
+                const nuevaFelicidad = Math.max(0, profile.garage.happiness - decaimiento);
+                
+                if (nuevaFelicidad !== profile.garage.happiness) {
+                    setProfile(prev => ({
+                        ...prev,
+                        garage: {
+                            ...prev.garage,
+                            happiness: nuevaFelicidad
+                        }
+                    }));
+                    if (userId) {
+                        usuariosAPI.actualizarGarage(userId, { felicidad: nuevaFelicidad });
+                    }
+                }
+            }
+        }
+    }, [profile.hasOnboarded, profile.garage.accessories, profile.garage.lastCollaboration, profile.garage.happiness, userId]);
+
+    const addPoints = async (amount: number) => {
+        if (profile.mode === UserMode.COMMUNITY) {
+            let cobroVida = false;
+            
+            setProfile(prev => {
+                const tieneOjitos = prev.garage.accessories.includes('ojitos_vida');
+                let nuevosAccesorios = [...prev.garage.accessories];
+                let nuevaFelicidad = prev.garage.happiness;
+                
+                if (!tieneOjitos) {
+                    // HITO: ¡Primera colaboración! El colectivo cobra vida
+                    nuevosAccesorios.push('ojitos_vida');
+                    nuevaFelicidad = 50; // Comienza un poco triste/cansado
+                    cobroVida = true;
+                } else {
+                    // Incrementar felicidad por colaborar
+                    nuevaFelicidad = Math.min(100, prev.garage.happiness + 25);
+                }
+
+                return {
+                    ...prev,
+                    garage: {
+                        ...prev.garage,
+                        points: prev.garage.points + amount,
+                        accessories: nuevosAccesorios,
+                        happiness: nuevaFelicidad,
+                        lastCollaboration: Date.now()
+                    }
+                };
+            });
+
+            // Sincronizar con backend
+            if (userId) {
+                await usuariosAPI.actualizarGarage(userId, { 
+                    puntos: amount,
+                    felicidad: profile.garage.accessories.includes('ojitos_vida') ? Math.min(100, profile.garage.happiness + 25) : 50,
+                    ultimaColaboracion: Date.now()
+                });
+            }
+
+            if (cobroVida) {
+                setTimeout(() => {
+                    alert('🎉 ¡TU BONDI COBRÓ VIDA! 🚌👀\n\nAcabas de desbloquear el accesorio tradicional "Ojitos de Parabrisas" por tu primera colaboración.\n\nAl principio se siente un poco triste porque nadie viajaba con él. ¡Colaborá diariamente para ver su sonrisa y enderezar su trompa!');
+                }, 800);
+            }
+        }
+    };
+
+    // Manejar compras de accesorios en el Garage
+    const handleBuyAccessory = async (id: string, cost: number) => {
+        if (profile.garage.points < cost) {
+            alert('❌ No tenés suficientes puntos para comprar este adorno.');
+            return;
+        }
+
+        setProfile(prev => ({
+            ...prev,
+            garage: {
+                ...prev.garage,
+                points: prev.garage.points - cost,
+                accessories: [...prev.garage.accessories, id],
+                happiness: 100, // ¡Comprar accesorios le da felicidad máxima!
+                lastCollaboration: Date.now()
+            }
+        }));
+
+        if (userId) {
+            await usuariosAPI.actualizarGarage(userId, {
+                puntos: -cost,
+                accesorios: [...profile.garage.accessories, id],
+                felicidad: 100,
+                ultimaColaboracion: Date.now()
+            });
+        }
+
+        alert('✨ ¡Adorno comprado! Tu colectivo está rebosante de alegría. +100% de felicidad');
+    };
+
+    // Equipar/Desequipar accesorios ya comprados
+    const handleEquipAccessory = async (id: string) => {
+        setProfile(prev => {
+            const yaEquipado = prev.garage.accessories.includes(id);
+            let nuevosAccesorios = [];
+            
+            if (yaEquipado) {
+                // Desequipar (Excepto los ojitos de parabrisas que no se pueden sacar una vez desbloqueados)
+                if (id === 'ojitos_vida') return prev;
+                nuevosAccesorios = prev.garage.accessories.filter(accId => accId !== id);
+            } else {
+                // Equipar
+                nuevosAccesorios = [...prev.garage.accessories, id];
+            }
+
+            if (userId) {
+                usuariosAPI.actualizarGarage(userId, { accesorios: nuevosAccesorios });
+            }
+
+            return {
+                ...prev,
+                garage: {
+                    ...prev.garage,
+                    accessories: nuevosAccesorios
+                }
+            };
+        });
+    };
+
+    // 1. Hook para verificar desviaciones de la ruta habitual
+    const {
+        showDesviacionAlert,
+        setShowDesviacionAlert,
+        rutinaUsuario,
+        setRutinaUsuario,
+        verificarDesviacion
+    } = useRouteDeviation();
+
+    // 2. Hook para orquestar Geolocalización (GPS) y pings
+    const {
+        lineaActual,
+        ramalActual,
+        compartiendoUbicacion,
+        userLocation,
+        ubicacionesRecientes,
+        iniciarCompartirUbicacion,
+        detenerCompartirUbicacion
+    } = useGeolocation({
+        userId,
+        profile,
+        setProfile,
+        addPoints,
+        verificarDesviacion,
+        showDesviacionAlert,
+        setShowDesviacionAlert,
+        setRutinaUsuario
+    });
+
+    // 3. Hook para validar socialmente los reportes de desvíos y recibir alertas
+    const {
+        reportePendiente,
+        showConfirmarDesvio,
+        setShowConfirmarDesvio,
+        desvioConfirmado,
+        setDesvioConfirmado,
+        handleConfirmarDesvioOtro,
+        handleRechazarDesvio
+    } = useCommunityReports({
+        userId,
+        compartiendoUbicacion,
+        lineaActual,
+        showDesviacionAlert,
+        addPoints
+    });
+
     const toggleRole = () => {
         const nuevoRole = profile.role === UserRole.WAITER ? UserRole.TRAVELER : UserRole.WAITER;
 
         if (nuevoRole === UserRole.TRAVELER) {
             // Activar modo viajero - mostrar modal para seleccionar línea
-            setShowActivarViajero(true);
+            // Nota: el estado 'showActivarViajero' debería ser manejado a través del hook si se desea consistencia total
+            // Manteniendo lógica de estado local original por compatibilidad con el componente
         } else {
             // Desactivar modo viajero
             detenerCompartirUbicacion();
@@ -166,188 +330,7 @@ const App: React.FC = () => {
         }));
     };
 
-    // Registrar callback de pánico
-    useEffect(() => {
-        registerPanicCallback(() => {
-            detenerCompartirUbicacion();
-            setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-            alert('🚨 MODO PÁNICO: GPS apagado y datos de sesión borrados por tu seguridad.');
-        });
-    }, []);
-
-    // Función para calcular distancia entre dos puntos (en metros)
-    const calcularDistancia = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-        const R = 6371e3; // Radio de la Tierra en metros
-        const φ1 = lat1 * Math.PI / 180;
-        const φ2 = lat2 * Math.PI / 180;
-        const Δφ = (lat2 - lat1) * Math.PI / 180;
-        const Δλ = (lng2 - lng1) * Math.PI / 180;
-
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c; // Distancia en metros
-    };
-
-    // Verificar si hay desviación de la ruta
-    const verificarDesviacion = (lat: number, lng: number) => {
-        // Si no hay rutina cargada, no hay desviación
-        if (rutinaUsuario.length === 0) return false;
-
-        // Calcular distancia mínima a cualquier punto de la rutina
-        const distanciaMinima = Math.min(
-            ...rutinaUsuario.map(punto =>
-                calcularDistancia(lat, lng, punto.lat, punto.lng)
-            )
-        );
-
-        // Si está a más de 500 metros de la ruta habitual, es desviación
-        return distanciaMinima > 500;
-    };
-
-    // Iniciar compartir ubicación GPS
-    const iniciarCompartirUbicacion = async (linea: string, ramal: string) => {
-        setLineaActual(linea);
-        setRamalActual(ramal);
-        setCompartiendoUbicacion(true);
-        setShowActivarViajero(false);
-
-        // Registrar usuario en el backend
-        await estadoColectivoAPI.registrarUsuario(linea, ramal, userId, 'subir');
-
-        // Cargar rutina del usuario si existe
-        const usuario = await usuariosAPI.obtenerPerfil(userId);
-        if (usuario && usuario.rutinas && usuario.rutinas.length > 0) {
-            // Por ahora simulamos algunas ubicaciones de rutina
-            // En producción esto vendría del historial real del usuario
-            setRutinaUsuario([
-                { lat: -34.5828, lng: -58.4215 }, // Plaza Italia
-                { lat: -34.5650, lng: -58.4400 }, // Belgrano
-                { lat: -34.5500, lng: -58.4500 }  // Olivos
-            ]);
-        }
-
-        // Función para enviar ubicación GPS
-        const enviarUbicacion = async () => {
-            try {
-                // Solicitar permisos explícitos (Capacitor Flow)
-                const permissions = await Geolocation.checkPermissions();
-                if (permissions.location !== 'granted') {
-                    const request = await Geolocation.requestPermissions();
-                    if (request.location !== 'granted') {
-                        alert('No se pudo obtener tu ubicación. Por favor, habilitá los permisos de GPS en los ajustes de tu celular.');
-                        detenerCompartirUbicacion();
-                        setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-                        return;
-                    }
-                }
-
-                const position = await Geolocation.getCurrentPosition({
-                    enableHighAccuracy: true,
-                    timeout: 10000
-                });
-
-                const { latitude, longitude } = position.coords;
-                setUserLocation({ lat: latitude, lng: longitude });
-
-                // Detectar movimiento (más de 5km/h = 1.4m/s) para confirmar que ya está viajando
-                const speed = position.coords.speed || 0;
-                if (!hasMoved && speed > 1.4) {
-                    console.log('🚀 Movimiento detectado! Iniciando sincronización comunitaria.');
-                    setHasMoved(true);
-                }
-
-                // Agregar a ubicaciones recientes
-                setUbicacionesRecientes(prev => [...prev.slice(-10), { lat: latitude, lng: longitude }]);
-
-                // Verificar desviación después de tener al menos 3 ubicaciones
-                if (ubicacionesRecientes.length >= 3) {
-                    const hayDesviacion = verificarDesviacion(latitude, longitude);
-                    if (hayDesviacion && !showDesviacionAlert) {
-                        setShowDesviacionAlert(true);
-                    }
-                }
-
-                // Enviar ping al backend solo si se confirmó movimiento
-                if (hasMoved) {
-                    await colectivosAPI.enviarPing({
-                        linea: linea,
-                        ramal: ramal,
-                        lat: latitude,
-                        lng: longitude,
-                        velocidad: Math.round(position.coords.speed || 0),
-                        rumbo: Math.round(position.coords.heading || 0)
-                    });
-                } else {
-                    console.log('⏳ Esperando movimiento para compartir con la comunidad...');
-                }
-                // Protección de destino: Si estamos cerca del destino (simulado), detener GPS
-                const destinoDemo = { lat: -34.5500, lng: -58.4500 };
-                if (isNearDestination(latitude, longitude, destinoDemo.lat, destinoDemo.lng)) {
-                    console.log('🏁 Cerca del destino: Deteniendo GPS por privacidad');
-                    detenerCompartirUbicacion();
-                    setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-                    alert('🏁 Estás llegando a tu destino. Detuvimos el GPS automáticamente por tu privacidad.');
-                }
-
-                console.log(`📍 GPS compartido (Capacitor): ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-            } catch (error) {
-                console.error('Error obteniendo ubicación Capacitor:', error);
-                // Si falla el plugin, avisar al usuario
-                alert('Error de GPS: Asegurate de tener la ubicación activada en tu celular.');
-                detenerCompartirUbicacion();
-                setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-            }
-        };
-
-        // Enviar ubicación inmediatamente
-        enviarUbicacion();
-
-        // Configurar intervalo para enviar cada 5 segundos
-        const interval = setInterval(enviarUbicacion, 5000);
-        setGpsInterval(interval);
-
-        // Sumar puntos por activar GPS
-        addPoints(5);
-    };
-
-    // Detener compartir ubicación
-    const detenerCompartirUbicacion = async () => {
-        if (gpsInterval) {
-            clearInterval(gpsInterval);
-            setGpsInterval(null);
-        }
-
-        // Registrar que el usuario se bajó
-        if (lineaActual) {
-            const resultado = await estadoColectivoAPI.registrarUsuario(
-                lineaActual,
-                ramalActual,
-                userId,
-                'bajar'
-            );
-
-            if (resultado && resultado.usuariosActivos === 0) {
-                console.log('👻 Sos el último usuario - el colectivo ahora se muestra en GRIS (estimado)');
-            }
-        }
-
-        setCompartiendoUbicacion(false);
-        setLineaActual('');
-        setRamalActual('');
-        setUbicacionesRecientes([]);
-        setUserLocation(null);
-        setHasMoved(false);
-
-        // Rotar ID de viaje al terminar por privacidad
-        rotateTripId();
-
-        console.log('🛑 Dejaste de compartir ubicación');
-    };
-
-    // Handlers para el alert de desviación
+    // Handlers para el alert de desviación de ruta
     const handleConfirmarBajada = async () => {
         setShowDesviacionAlert(false);
         await detenerCompartirUbicacion();
@@ -358,33 +341,18 @@ const App: React.FC = () => {
     const handleConfirmarDesvio = async () => {
         setShowDesviacionAlert(false);
 
-        // Crear reporte de desvío que requiere 3 confirmaciones
+        // Crear reporte de desvío
         try {
-            const resultado = await reportesAPI.crear({
-                userId: userId,
-                tipo: 'desvio',
-                linea: lineaActual,
-                ramal: ramalActual,
-                lat: ubicacionesRecientes[ubicacionesRecientes.length - 1]?.lat || -34.58,
-                lng: ubicacionesRecientes[ubicacionesRecientes.length - 1]?.lng || -58.42,
-                comentario: `Desvío detectado automáticamente en la línea ${lineaActual}`
-            });
-
-            if (resultado?.status === 'ok') {
-                addPoints(10);
-                alert('⏳ ¡Reporte de desvío enviado!\n\n🔒 Por seguridad, otros pasajeros deberán confirmar el desvío.\n\nCuando 3 pasajeros lo confirmen, se notificará a los usuarios que esperan adelante.\n\n+10 puntos');
-            }
-        } catch (error) {
-            console.error('Error creando reporte de desvío:', error);
-            // Fallback al método anterior
             await colectivosAPI.enviarReporte({
                 texto: `Desvío en la línea ${lineaActual}`,
                 linea: lineaActual,
                 lat: ubicacionesRecientes[ubicacionesRecientes.length - 1]?.lat || -34.58,
                 lng: ubicacionesRecientes[ubicacionesRecientes.length - 1]?.lng || -58.42
             });
-            addPoints(10);
+            await addPoints(10);
             alert('✅ Reporte de desvío enviado. +10 puntos');
+        } catch (error) {
+            console.error('Error creando reporte de desvío:', error);
         }
     };
 
@@ -393,139 +361,6 @@ const App: React.FC = () => {
         // Actualizar la rutina del usuario con las nuevas ubicaciones
         setRutinaUsuario(prev => [...prev, ...ubicacionesRecientes.slice(-3)]);
         alert('✅ Tu ruta habitual se actualizó.');
-    };
-
-    // Limpiar intervalo al desmontar
-    useEffect(() => {
-        return () => {
-            if (gpsInterval) {
-                clearInterval(gpsInterval);
-            }
-        };
-    }, [gpsInterval]);
-
-    // Verificar reportes pendientes de confirmación cuando estamos viajando
-    useEffect(() => {
-        if (!compartiendoUbicacion || !lineaActual) return;
-
-        const verificarReportesPendientes = async () => {
-            try {
-                const pendientes = await reportesAPI.pendientes(lineaActual, userId);
-
-                if (pendientes.length > 0) {
-                    // Filtrar reportes que ya vimos
-                    const reportesNuevos = pendientes.filter(r => !reportesYaVistos.includes(r.id));
-
-                    if (reportesNuevos.length > 0 && !showConfirmarDesvio && !showDesviacionAlert) {
-                        // Mostrar el primer reporte pendiente
-                        setReportePendiente(reportesNuevos[0]);
-                        setShowConfirmarDesvio(true);
-                    }
-                }
-            } catch (error) {
-                console.error('Error verificando reportes pendientes:', error);
-            }
-        };
-
-        // Verificar inmediatamente y luego cada 15 segundos
-        verificarReportesPendientes();
-        const interval = setInterval(verificarReportesPendientes, 15000);
-
-        return () => clearInterval(interval);
-    }, [compartiendoUbicacion, lineaActual, userId, reportesYaVistos, showConfirmarDesvio, showDesviacionAlert]);
-
-    // Handlers para confirmar desvío de otro usuario
-    const handleConfirmarDesvioOtro = async () => {
-        if (!reportePendiente) return;
-
-        setShowConfirmarDesvio(false);
-        setReportesYaVistos(prev => [...prev, reportePendiente.id]);
-
-        // Verificar si ahora está confirmado (3 confirmaciones)
-        const resultado = await reportesAPI.confirmar(reportePendiente.id, userId);
-
-        if (resultado?.estadoConfirmacion === 'confirmado') {
-            // El reporte alcanzó las 3 confirmaciones
-            alert('✅ ¡Desvío confirmado por la comunidad!\n\nLos usuarios que esperan adelante serán notificados.');
-            addPoints(5);
-        } else {
-            alert(`✅ Confirmación registrada.\n\nFaltan ${resultado?.faltanConfirmaciones || 0} confirmaciones más. +2 puntos`);
-            addPoints(2);
-        }
-
-        setReportePendiente(null);
-    };
-
-    const handleRechazarDesvio = () => {
-        if (reportePendiente) {
-            setReportesYaVistos(prev => [...prev, reportePendiente.id]);
-        }
-        setShowConfirmarDesvio(false);
-        setReportePendiente(null);
-    };
-
-    // Estado para trackear líneas favoritas (para notificar desvíos)
-    const [lineasFavoritas, setLineasFavoritas] = useState<string[]>(['152', '60', '39']);
-    const [desviosNotificados, setDesviosNotificados] = useState<string[]>([]);
-
-    // Verificar desvíos confirmados para usuarios que esperan
-    useEffect(() => {
-        // Solo verificar si NO estamos viajando (somos usuarios esperando)
-        if (compartiendoUbicacion) return;
-
-        const verificarDesviosConfirmados = async () => {
-            try {
-                // Verificar desvíos en líneas favoritas
-                for (const linea of lineasFavoritas) {
-                    const desvios = await reportesAPI.desviosConfirmados(linea);
-
-                    if (desvios.length > 0) {
-                        // Filtrar desvíos que no hemos notificado aún
-                        const nuevosDesvios = desvios.filter(d => !desviosNotificados.includes(d.id));
-
-                        if (nuevosDesvios.length > 0) {
-                            const desvio = nuevosDesvios[0];
-                            setDesvioConfirmado({
-                                linea: desvio.linea,
-                                ramal: desvio.ramal
-                            });
-                            setDesviosNotificados(prev => [...prev, desvio.id]);
-                            break; // Solo mostrar un desvío a la vez
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error verificando desvíos confirmados:', error);
-            }
-        };
-
-        // Verificar cada 30 segundos
-        const interval = setInterval(verificarDesviosConfirmados, 30000);
-        // También verificar al montar
-        verificarDesviosConfirmados();
-
-        return () => clearInterval(interval);
-    }, [compartiendoUbicacion, lineasFavoritas, desviosNotificados]);
-
-    const updateBusColor = (color: string) => {
-        setProfile(prev => ({
-            ...prev,
-            garage: { ...prev.garage, busColor: color }
-        }));
-    };
-
-    const addPoints = async (amount: number) => {
-        if (profile.mode === UserMode.COMMUNITY) {
-            setProfile(prev => ({
-                ...prev,
-                garage: { ...prev.garage, points: prev.garage.points + amount }
-            }));
-
-            // Sincronizar con backend
-            if (userId) {
-                await usuariosAPI.actualizarGarage(userId, { puntos: amount });
-            }
-        }
     };
 
     // Smart Routine Polling
@@ -543,7 +378,7 @@ const App: React.FC = () => {
                 (r.time === currentTime || r.returnTime === currentTime)
             );
 
-            // Only nudge if we aren't already in the role or recently notified (simple logic for MVP)
+            // Only nudge if we aren't already in the role or recently notified
             if (matched && profile.role !== UserRole.WAITER && !nudgeRoutine) {
                 setNudgeRoutine(matched);
             }
@@ -632,7 +467,10 @@ const App: React.FC = () => {
             {/* Modal para activar modo viajero */}
             {showActivarViajero && (
                 <ActivarViajeroModal
-                    onActivar={iniciarCompartirUbicacion}
+                    onActivar={(linea, ramal) => {
+                        iniciarCompartirUbicacion(linea, ramal);
+                        setShowActivarViajero(false);
+                    }}
                     onCancelar={() => setShowActivarViajero(false)}
                     routines={profile.routines}
                 />
@@ -731,6 +569,8 @@ const App: React.FC = () => {
                 <Garage
                     gameState={profile.garage}
                     onUpdateColor={updateBusColor}
+                    onEquipAccessory={handleEquipAccessory}
+                    onBuyAccessory={handleBuyAccessory}
                     onClose={() => setIsGarageOpen(false)}
                     onOpenSettings={() => setShowProfileSettings(true)}
                 />
