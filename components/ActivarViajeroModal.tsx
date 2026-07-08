@@ -157,8 +157,14 @@ export const ActivarViajeroModal: React.FC<ActivarViajeroModalProps> = ({ onActi
             </button>
           </div>
 
-          {/* Advertencia de batería */}
-          <div className="text-center pt-2">
+          {/* Consentimiento de geolocalización + batería */}
+          <div className="text-center pt-2 space-y-1.5">
+            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+              {t('traveler_consent')}{' '}
+              <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="text-luminous-green underline">
+                {t('onboarding_legal_privacy')}
+              </a>
+            </p>
             <p className="text-xs text-slate-500 font-medium">
               {t('traveler_battery_warning')}
             </p>

@@ -198,11 +198,21 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       </div>
 
       {/* Safety Footer */}
-      <div className="text-center pt-8">
+      <div className="text-center pt-8 space-y-2">
         <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 font-medium">
           <ShieldCheck size={12} />
           <span>{t('onboarding_privacy')}</span>
         </div>
+        <p className="text-[10px] text-slate-500 font-medium">
+          {t('onboarding_legal_prefix')}{' '}
+          <a href="/terminos.html" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">
+            {t('onboarding_legal_terms')}
+          </a>{' '}
+          {t('onboarding_legal_and')}{' '}
+          <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">
+            {t('onboarding_legal_privacy')}
+          </a>
+        </p>
       </div>
     </div>
   );

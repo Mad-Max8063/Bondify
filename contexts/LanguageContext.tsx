@@ -161,7 +161,12 @@ type TranslationKeys =
   | 'install_banner_desc'
   | 'install_banner_cta'
   | 'profile_points'
-  | 'profile_level';
+  | 'profile_level'
+  | 'onboarding_legal_prefix'
+  | 'onboarding_legal_terms'
+  | 'onboarding_legal_and'
+  | 'onboarding_legal_privacy'
+  | 'traveler_consent';
 
 const translations: Record<Language, Record<TranslationKeys, string>> = {
   es: {
@@ -324,6 +329,11 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     install_banner_cta: 'Instalar',
     profile_points: 'puntos',
     profile_level: 'Nivel',
+    onboarding_legal_prefix: 'Al continuar aceptás los',
+    onboarding_legal_terms: 'Términos y Condiciones',
+    onboarding_legal_and: 'y la',
+    onboarding_legal_privacy: 'Política de Privacidad',
+    traveler_consent: 'Al activar, aceptás compartir tu ubicación aproximada de forma anónima mientras dure el viaje. Detalles en la',
   },
   en: {
     app_subtitle: 'Travel better, wait less.',
@@ -485,6 +495,11 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     install_banner_cta: 'Install',
     profile_points: 'points',
     profile_level: 'Level',
+    onboarding_legal_prefix: 'By continuing you accept the',
+    onboarding_legal_terms: 'Terms & Conditions',
+    onboarding_legal_and: 'and the',
+    onboarding_legal_privacy: 'Privacy Policy',
+    traveler_consent: 'By activating, you agree to anonymously share your approximate location while the trip lasts. Details in the',
   },
 };
 

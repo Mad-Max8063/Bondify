@@ -4,217 +4,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data: blob:; img-src 'self' https: http: data: blob:; connect-src 'self' https: http: ws: wss:;">
-  <title>Bondify</title>
+  <title>Bondify — Tu bondi en tiempo real</title>
+  <meta name="description"
+    content="Bondify: sabé dónde está tu colectivo en tiempo real, compartido por la propia comunidad de pasajeros. Reportá demoras, desvíos y esperá menos en la parada." />
+
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/icons/icon-48.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-152.png" />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#4f46e5" />
+  <meta name="theme-color" content="#0F172A" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Bondify" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script>
-    // Polyfill for process.env
-    if (typeof window !== 'undefined') {
-      window.process = {
-        env: {
-          NODE_ENV: 'development',
-          API_KEY: '',
-        }
-      };
-    }
-  </script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          animation: {
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-          },
-          colors: {
-            obsidian: {
-              DEFAULT: '#0F172A',
-              light: '#1E293B',
-              dark: '#031427'
-            },
-            luminous: {
-              green: '#10B981',
-              amber: '#F59E0B',
-              blue: '#64748B'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body {
-      -webkit-tap-highlight-color: transparent;
-      overscroll-behavior-y: none;
-      background-color: #0F172A; /* Obsidian by default */
-    }
 
-    .h-dynamic {
-      height: 100vh; /* Fallback */
-      height: 100dvh;
-    }
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Bondify" />
+  <meta property="og:title" content="Bondify — Tu bondi en tiempo real" />
+  <meta property="og:description"
+    content="Sabé dónde está tu colectivo en tiempo real, compartido por la comunidad. Reportá demoras y desvíos, y esperá menos en la parada." />
+  <meta property="og:image" content="/social-preview.png" />
+  <meta property="og:locale" content="es_AR" />
 
-    .pb-safe {
-      padding-bottom: env(safe-area-inset-bottom, 16px);
-    }
-
-    /* Leaflet overrides to match design */
-    .leaflet-div-icon {
-      background: transparent;
-      border: none;
-    }
-
-    /* Leaflet Dark Theme Filter to WOW user */
-    .leaflet-container {
-      background: #0F172A !important;
-    }
-    .leaflet-tile-pane {
-      filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
-    }
-
-    /* Luminous Tech Glassmorphism Styles */
-    .glass-card {
-      background: rgba(30, 41, 59, 0.65);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .glass-nav {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-    }
-
-    /* Neon Glow borders */
-    .glow-green {
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
-      border-color: rgba(16, 185, 129, 0.4) !important;
-    }
-    .glow-amber {
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
-      border-color: rgba(245, 158, 11, 0.4) !important;
-    }
-    .glow-red {
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
-      border-color: rgba(239, 68, 68, 0.4) !important;
-    }
-
-    /* Glass Inputs */
-    .glass-input {
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #F8FAFC;
-      border-radius: 0.75rem;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-    .glass-input:focus {
-      border-color: rgba(99, 102, 241, 0.6);
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
-    }
-
-    /* Colectivo custom animations */
-    @keyframes colectivo-bounce {
-      0%, 100% {
-        transform: translateY(0) rotate(0deg);
-      }
-      50% {
-        transform: translateY(-3px) rotate(0.5deg);
-      }
-    }
-    .animate-colectivo-bounce {
-      animation: colectivo-bounce 0.8s ease-in-out infinite;
-      transform-origin: bottom center;
-    }
-
-    @keyframes wheel-spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    .animate-wheel-spin-rear {
-      animation: wheel-spin 0.3s linear infinite;
-      transform-origin: 26px 41px;
-    }
-    .animate-wheel-spin-front {
-      animation: wheel-spin 0.3s linear infinite;
-      transform-origin: 45px 42.5px;
-    }
-
-    /* Side-profile specific wheels rotation */
-    .animate-wheel-spin-rear-side {
-      animation: wheel-spin 0.25s linear infinite;
-      transform-origin: 16px 46px;
-    }
-    .animate-wheel-spin-front-side {
-      animation: wheel-spin 0.25s linear infinite;
-      transform-origin: 48px 46px;
-    }
-
-    /* Glass Window reflection glint animation */
-    @keyframes window-glint {
-      0% {
-        transform: translateX(90px) translateY(-10px) rotate(15deg);
-      }
-      25% {
-        transform: translateX(-50px) translateY(-10px) rotate(15deg);
-      }
-      100% {
-        transform: translateX(-50px) translateY(-10px) rotate(15deg);
-      }
-    }
-    .animate-window-glint {
-      animation: window-glint 3s ease-in-out infinite;
-    }
-  </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react/": "https://esm.sh/react@18.3.1/",
-    "react-dom": "https://esm.sh/react-dom@18.3.1?deps=react@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1",
-    "lucide-react": "https://esm.sh/lucide-react@0.454.0?deps=react@18.3.1",
-    "@google/genai": "https://esm.sh/@google/genai@0.2.0",
-    "leaflet": "https://esm.sh/leaflet@1.9.4",
-    "react-leaflet": "https://esm.sh/react-leaflet@4.2.1?deps=leaflet@1.9.4,react@18.3.1,react-dom@18.3.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Bondify — Tu bondi en tiempo real" />
+  <meta name="twitter:description"
+    content="Sabé dónde está tu colectivo en tiempo real, compartido por la comunidad. Reportá demoras y desvíos, y esperá menos en la parada." />
+  <meta name="twitter:image" content="/social-preview.png" />
 </head>
 
 <body>
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
-  <script>
-    // Register Service Worker for PWA functionality
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((registration) => {
-            console.log('[Bondify] Service Worker registered:', registration.scope);
-          })
-          .catch((error) => {
-            console.log('[Bondify] Service Worker registration failed:', error);
-          });
-      });
-    }
-  </script>
 </body>
 
 </html>
