@@ -45,6 +45,12 @@ try {
     db = admin.firestore();
     console.log("🔥 Firebase conectado con éxito.");
 } catch (e) {
+    // En producción una DB en memoria que se borra en cada restart es un desastre
+    // silencioso: preferimos que el deploy falle a la vista.
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_MOCK_DB !== 'true') {
+        console.error("FATAL: sin credenciales de Firebase en producción (FIREBASE_CREDENTIALS o serviceAccountKey.json). Abortando.");
+        process.exit(1);
+    }
     console.warn("⚠️  NO se encontró 'serviceAccountKey.json' real. Iniciando en MOCK MODE (Memoria Local).");
     isMock = true;
 
@@ -64,15 +70,29 @@ try {
             return { isActive: true };
         }
         async update(data) {
-            // Very basic support for arrayUnion mock
+            // Soporta field paths con punto ("garage.puntos") como Firestore real
+            const setDeep = (obj, dottedKey, applyFn) => {
+                const parts = dottedKey.split('.');
+                let target = obj;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (typeof target[parts[i]] !== 'object' || target[parts[i]] === null) target[parts[i]] = {};
+                    target = target[parts[i]];
+                }
+                const leaf = parts[parts.length - 1];
+                target[leaf] = applyFn(target[leaf]);
+            };
+
             for (const key in data) {
                 if (data[key] && data[key]._methodName === 'arrayUnion') {
-                    if (!Array.isArray(this.dataVal[key])) this.dataVal[key] = [];
-                    this.dataVal[key].push(...data[key]._elements);
+                    setDeep(this.dataVal, key, (curr) => {
+                        const arr = Array.isArray(curr) ? curr : [];
+                        arr.push(...data[key]._elements);
+                        return arr;
+                    });
                 } else if (data[key] && data[key]._methodName === 'increment') {
-                    this.dataVal[key] = (this.dataVal[key] || 0) + data[key].value;
+                    setDeep(this.dataVal, key, (curr) => (curr || 0) + data[key].value);
                 } else {
-                    this.dataVal[key] = data[key];
+                    setDeep(this.dataVal, key, () => data[key]);
                 }
             }
             memoryDB[this.path] = this.dataVal;
@@ -89,16 +109,25 @@ try {
             const existingData = memoryDB[path];
             return new MockDoc(path, existingData);
         }
+        async add(data) {
+            const id = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            const path = `${this.name}/${id}`;
+            memoryDB[path] = data;
+            return { id, path };
+        }
         where() { return this; } // Ignoramos filtros en mock
+        orderBy() { return this; }
+        limit() { return this; }
         async get() {
             // Devolver todos los docs de la colección
             const docs = Object.keys(memoryDB)
                 .filter(k => k.startsWith(this.name + '/'))
                 .map(k => ({
                     id: k.split('/').pop(),
-                    data: () => memoryDB[k]
+                    data: () => memoryDB[k],
+                    ref: new MockDoc(k, memoryDB[k])
                 }));
-            return { forEach: (cb) => docs.forEach(cb), empty: docs.length === 0, docs: docs };
+            return { forEach: (cb) => docs.forEach(cb), empty: docs.length === 0, docs: docs, size: docs.length };
         }
     }
 

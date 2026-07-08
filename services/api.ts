@@ -2,9 +2,10 @@ import axios from 'axios';
 import { BusEntity, BusStatus, ChaosReport, ReportType } from '../types';
 import { fuzzCoordinates, getTripId } from '../utils/privacy';
 
-// URL del backend - usa variable de entorno o fallback
+// URL del backend. Default '' = same-origin (monolito: Express sirve el build
+// y la API; en dev el proxy de Vite reenvía /api al backend local).
 const envUrl = import.meta.env.VITE_BACKEND_URL;
-const BACKEND_URL = envUrl !== undefined ? envUrl : (process.env.VITE_BACKEND_URL || 'http://localhost:8001');
+const BACKEND_URL = envUrl !== undefined ? envUrl : '';
 
 // If BACKEND_URL is empty (relative), API_BASE is just /api.
 // If BACKEND_URL is http://localhost:8001, API_BASE is http://localhost:8001/api.

@@ -176,6 +176,25 @@ class UserService {
     }
 
     /**
+     * Otorgar puntos server-side (única vía válida de sumar puntos).
+     * Crea el perfil on-the-fly si no existe todavía.
+     */
+    async awardPoints(userId, puntos) {
+        if (!puntos || puntos <= 0) return null;
+        try {
+            const existing = await this.getUser(userId);
+            if (!existing) {
+                await this.createUser(userId, { nombre: 'Usuario' });
+            }
+            return await this.updateGarage(userId, { puntos });
+        } catch (error) {
+            // Los puntos nunca deben romper el flujo principal
+            console.error('Error awarding points:', error.message);
+            return null;
+        }
+    }
+
+    /**
      * Actualizar Garage
      */
     async updateGarage(userId, garageUpdate) {

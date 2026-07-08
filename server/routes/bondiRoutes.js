@@ -50,6 +50,17 @@ router.post('/ping', async (req, res) => {
 router.post('/reportar', async (req, res) => {
   const { texto, linea } = req.body;
 
+  // Validación: el texto va directo a Gemini, sin tope es un vector de abuso de cuota.
+  if (!texto || typeof texto !== 'string' || !linea) {
+    return res.status(400).json({ error: 'Faltan datos requeridos (texto, linea)' });
+  }
+  if (texto.length > 500) {
+    return res.status(400).json({ error: 'Texto demasiado largo (máx. 500 caracteres)' });
+  }
+  if (!/^[0-9A-Za-zÁ-ú ]{1,12}$/.test(String(linea))) {
+    return res.status(400).json({ error: 'Línea inválida' });
+  }
+
   try {
     // 1. Analizamos con Gemini (Igual que antes)
     const analisisIA = await analizarIncidente(texto);
@@ -66,14 +77,16 @@ router.post('/reportar', async (req, res) => {
     }
 
     // 2. Guardamos en Firestore
-    // Usamos 'arrayUnion' para agregar el reporte al array sin borrar los anteriores
-    await bondisRef.doc(String(linea)).update({
+    // set(merge) y no update(): update() falla con NOT_FOUND si la línea
+    // todavía no tiene doc (primer reporte sin ping previo).
+    await bondisRef.doc(String(linea)).set({
+      linea,
       reportes: admin.firestore.FieldValue.arrayUnion({
         tipo: resultado.categoria,
         resumen: resultado.resumen_corto,
         timestamp: new Date().toISOString() // Guardamos como string ISO para facilitar lectura
       })
-    });
+    }, { merge: true });
 
     res.json({
       mensaje: "Reporte procesado en la nube",
@@ -129,7 +142,10 @@ router.get('/activos', async (req, res) => {
       bondis.push({ id: doc.id, ...data });
     });
     res.json({ status: 'ok', colectivos: bondis });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('Error obteniendo bondis activos:', e);
+    res.status(500).json({ error: 'Error obteniendo bondis' });
+  }
 });
 
 // RUTA 4: Buscar por línea

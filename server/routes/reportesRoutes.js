@@ -1,8 +1,17 @@
 import express from 'express';
 import { db, admin } from '../firebase.js';
-import { analizarIncidente } from '../services/geminiService.js';
+import userService from '../services/userService.js';
 
 const router = express.Router();
+
+const LINEA_REGEX = /^[0-9A-Za-zÁ-ú ]{1,12}$/;
+
+function coordenadasValidas(lat, lng) {
+  const latNum = parseFloat(lat);
+  const lngNum = parseFloat(lng);
+  return !isNaN(latNum) && !isNaN(lngNum) &&
+    latNum >= -90 && latNum <= 90 && lngNum >= -180 && lngNum <= 180;
+}
 
 // Referencia a la colección de reportes
 const reportesRef = db.collection('reportes_comunitarios');
@@ -47,13 +56,15 @@ async function crearReporte(datos) {
  * 📢 RUTA 1: Crear reporte comunitario
  */
 router.post('/crear', async (req, res) => {
-  const { userId, tipo, linea, ramal, lat, lng, comentario } = req.body;
+  const { tipo, linea, ramal, lat, lng, comentario } = req.body;
+  // La identidad sale SIEMPRE de la cookie de sesión, nunca del body.
+  const userId = req.userId;
 
   // Validación de campos requeridos
-  if (!userId || !tipo || !linea || lat === undefined || lng === undefined) {
+  if (!tipo || !linea || lat === undefined || lng === undefined) {
     return res.status(400).json({
       error: 'Faltan datos requeridos',
-      required: ['userId', 'tipo', 'linea', 'lat', 'lng']
+      required: ['tipo', 'linea', 'lat', 'lng']
     });
   }
 
@@ -64,6 +75,18 @@ router.post('/crear', async (req, res) => {
       error: 'Tipo de reporte inválido',
       tiposValidos
     });
+  }
+
+  if (!LINEA_REGEX.test(String(linea))) {
+    return res.status(400).json({ error: 'Línea inválida' });
+  }
+
+  if (!coordenadasValidas(lat, lng)) {
+    return res.status(400).json({ error: 'Coordenadas inválidas' });
+  }
+
+  if (comentario && String(comentario).length > 280) {
+    return res.status(400).json({ error: 'Comentario demasiado largo (máx. 280 caracteres)' });
   }
 
   try {
@@ -78,6 +101,8 @@ router.post('/crear', async (req, res) => {
 
     console.log(`📢 Nuevo reporte: ${tipo} en línea ${linea} por usuario ${userId}`);
 
+    await userService.awardPoints(userId, 10);
+
     res.json({
       status: 'ok',
       mensaje: '¡Reporte enviado! +10 puntos',
@@ -86,10 +111,7 @@ router.post('/crear', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error creando reporte:', error);
-    res.status(500).json({
-      error: 'Error creando reporte',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error creando reporte' });
   }
 });
 
@@ -144,10 +166,7 @@ router.get('/cercanos', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error obteniendo reportes cercanos:', error);
-    res.status(500).json({
-      error: 'Error obteniendo reportes',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error obteniendo reportes' });
   }
 });
 
@@ -169,10 +188,11 @@ function calcularDistancia(lat1, lng1, lat2, lng2) {
  * 👍 RUTA 3: Validar reporte (Yo también, Ya no pasa, Gracias)
  */
 router.post('/validar', async (req, res) => {
-  const { reporteId, userId, tipo = 'yo_tambien' } = req.body;
+  const { reporteId, tipo = 'yo_tambien' } = req.body;
+  const userId = req.userId;
 
-  if (!reporteId || !userId) {
-    return res.status(400).json({ error: 'Faltan datos requeridos (reporteId, userId)' });
+  if (!reporteId) {
+    return res.status(400).json({ error: 'Faltan datos requeridos (reporteId)' });
   }
 
   try {
@@ -233,6 +253,10 @@ router.post('/validar', async (req, res) => {
       puntos = 1;
     }
 
+    if (puntos > 0) {
+      await userService.awardPoints(userId, puntos);
+    }
+
     res.json({
       status: 'ok',
       mensaje,
@@ -241,10 +265,7 @@ router.post('/validar', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error validando reporte:', error);
-    res.status(500).json({
-      error: 'Error validando reporte',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error validando reporte' });
   }
 });
 
@@ -252,10 +273,11 @@ router.post('/validar', async (req, res) => {
  * ✅ RUTA 3.5: Confirmar reporte (para lleno y desvío)
  */
 router.post('/confirmar', async (req, res) => {
-  const { reporteId, userId } = req.body;
+  const { reporteId } = req.body;
+  const userId = req.userId;
 
-  if (!reporteId || !userId) {
-    return res.status(400).json({ error: 'Faltan datos requeridos (reporteId, userId)' });
+  if (!reporteId) {
+    return res.status(400).json({ error: 'Faltan datos requeridos (reporteId)' });
   }
 
   try {
@@ -320,6 +342,8 @@ router.post('/confirmar', async (req, res) => {
       mensaje = `✅ Confirmación registrada. Faltan ${faltan} confirmaciones más. +2 puntos`;
     }
 
+    await userService.awardPoints(userId, puntos);
+
     res.json({
       status: 'ok',
       mensaje,
@@ -330,10 +354,7 @@ router.post('/confirmar', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error confirmando reporte:', error);
-    res.status(500).json({
-      error: 'Error confirmando reporte',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error confirmando reporte' });
   }
 });
 
@@ -368,10 +389,7 @@ router.get('/linea/:linea', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error obteniendo reportes por línea:', error);
-    res.status(500).json({
-      error: 'Error obteniendo reportes',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error obteniendo reportes' });
   }
 });
 
@@ -380,7 +398,7 @@ router.get('/linea/:linea', async (req, res) => {
  */
 router.get('/pendientes/:linea', async (req, res) => {
   const { linea } = req.params;
-  const { userId } = req.query;
+  const userId = req.userId;
 
   try {
     const ahora = new Date().toISOString();
@@ -423,10 +441,7 @@ router.get('/pendientes/:linea', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error obteniendo reportes pendientes:', error);
-    res.status(500).json({
-      error: 'Error obteniendo reportes',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error obteniendo reportes' });
   }
 });
 
@@ -471,10 +486,7 @@ router.get('/desvios-confirmados/:linea', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error obteniendo desvíos confirmados:', error);
-    res.status(500).json({
-      error: 'Error obteniendo desvíos',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error obteniendo desvíos' });
   }
 });
 
@@ -483,11 +495,8 @@ router.get('/desvios-confirmados/:linea', async (req, res) => {
  */
 router.delete('/:reporteId', async (req, res) => {
   const { reporteId } = req.params;
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'userId requerido' });
-  }
+  // La autoría se verifica contra la sesión firmada, no contra el body.
+  const userId = req.userId;
 
   try {
     const docRef = reportesRef.doc(reporteId);
@@ -515,10 +524,7 @@ router.delete('/:reporteId', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error eliminando reporte:', error);
-    res.status(500).json({
-      error: 'Error eliminando reporte',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Error eliminando reporte' });
   }
 });
 

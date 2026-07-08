@@ -1,8 +1,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import process from 'process';
 
-// Usamos process.env.API_KEY como manda la regla, con fallback a GEMINI_API_KEY por compatibilidad
-const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+// Lazy: process.env recién está completo cuando dotenv ya corrió (imports ESM se evalúan antes).
+function getApiKey() {
+  return process.env.GEMINI_API_KEY || process.env.API_KEY;
+}
 
 // Mock Logic Helper
 function mockAnalisis(texto) {
@@ -33,6 +35,8 @@ function mockAnalisis(texto) {
 }
 
 async function analizarIncidente(textoReporte) {
+  const apiKey = getApiKey();
+
   // --- MOCK CHECK ---
   if (!apiKey || apiKey === 'tu_clave_gemini') {
     console.log("🔮 Gemini Mock: Analizando texto localmente...");
@@ -42,9 +46,9 @@ async function analizarIncidente(textoReporte) {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    // Usamos gemini-1.5-flash que es rápido y soporta JSON estructurado
+    // Flash: rápido, barato y soporta JSON estructurado
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       contents: `Eres un asistente de tránsito experto en Buenos Aires (AMBA).
       Analiza el siguiente reporte enviado por un pasajero de colectivo: "${textoReporte}".
       Tu tarea es clasificar la situación, extraer información útil y dar un consejo de seguridad breve.`,
