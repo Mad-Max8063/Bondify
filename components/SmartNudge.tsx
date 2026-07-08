@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bus, Clock, Check, X } from 'lucide-react';
+import { Clock, Check, X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SmartNudgeProps {
     line: string;
@@ -8,6 +9,8 @@ interface SmartNudgeProps {
 }
 
 export const SmartNudge: React.FC<SmartNudgeProps> = ({ line, onConfirm, onDeny }) => {
+    const { t, language } = useLanguage();
+
     return (
         <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top duration-500">
             <div className="bg-white rounded-2xl shadow-2xl p-4 border border-indigo-100 flex flex-col gap-4">
@@ -16,11 +19,13 @@ export const SmartNudge: React.FC<SmartNudgeProps> = ({ line, onConfirm, onDeny 
                         <Clock className="w-6 h-6 text-indigo-600 animate-pulse" />
                     </div>
                     <div className="flex-1">
-                        <p className="text-xs font-bold text-slate-400 uppercase">Rutina Detectada</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase">{t('nudge_title')}</p>
                         <h3 className="text-lg font-bold text-slate-800 leading-tight">
-                            ¿Estás yendo a tomar el <span className="text-indigo-600">{line}</span>?
+                            {language === 'es'
+                                ? <>¿Estás yendo a tomar el <span className="text-indigo-600">{line}</span>?</>
+                                : <>Heading out to catch the <span className="text-indigo-600">{line}</span>?</>}
                         </h3>
-                        <p className="text-sm text-slate-500 mt-1">Es tu horario habitual.</p>
+                        <p className="text-sm text-slate-500 mt-1">{t('nudge_desc')}</p>
                     </div>
                 </div>
 
@@ -29,13 +34,13 @@ export const SmartNudge: React.FC<SmartNudgeProps> = ({ line, onConfirm, onDeny 
                         onClick={onDeny}
                         className="flex-1 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                     >
-                        <X size={18} /> No hoy
+                        <X size={18} /> {t('nudge_deny')}
                     </button>
                     <button
                         onClick={onConfirm}
                         className="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
                     >
-                        <Check size={18} /> Sí, activar
+                        <Check size={18} /> {t('nudge_confirm')}
                     </button>
                 </div>
             </div>

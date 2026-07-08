@@ -372,10 +372,10 @@ export const usuariosAPI = {
  */
 export const reportesAPI = {
   /**
-   * Crear reporte comunitario
+   * Crear reporte comunitario.
+   * La identidad la pone el server desde la cookie de sesión.
    */
   async crear(datos: {
-    userId: string;
     tipo: string;
     linea: string;
     ramal?: string;

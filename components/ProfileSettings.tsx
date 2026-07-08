@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserMode, Routine } from '../types';
-import { Settings, Zap, Users, X, Clock, Plus, Trash2, Shield, AlertTriangle, ExternalLink } from 'lucide-react';
-import { deleteAllUserData, getStoredDataSummary } from '../utils/privacy';
+import { Settings, Zap, Users, X, Clock, Plus, Trash2, Shield, AlertTriangle, ExternalLink, Trophy, FileText } from 'lucide-react';
+import { deleteAllUserData } from '../utils/privacy';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usuariosAPI } from '../services/api';
 
 interface ProfileSettingsProps {
     currentMode: UserMode;
@@ -10,15 +11,30 @@ interface ProfileSettingsProps {
     onModeChange: (mode: UserMode) => void;
     onUpdateRoutines?: (routines: Routine[]) => void;
     onClose: () => void;
-    isPresentationMode?: boolean;
-    onTogglePresentationMode?: () => void;
+    demoMode?: boolean;
+    onToggleDemoMode?: () => void;
 }
 
-export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, routines = [], onModeChange, onUpdateRoutines, onClose, isPresentationMode, onTogglePresentationMode }) => {
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, routines = [], onModeChange, onUpdateRoutines, onClose, demoMode, onToggleDemoMode }) => {
     const { t, language, setLanguage } = useLanguage();
     const [newLine, setNewLine] = useState('');
     const [newTime, setNewTime] = useState('');
     const [newReturnTime, setNewReturnTime] = useState('');
+    const [stats, setStats] = useState<{ puntos: number; nivel: number } | null>(null);
+
+    // Puntos y nivel reales del backend (otorgados server-side)
+    useEffect(() => {
+        const cargarStats = async () => {
+            const data = await usuariosAPI.obtenerEstadisticas('me');
+            if (data?.garage) {
+                setStats({
+                    puntos: data.garage.puntos || 0,
+                    nivel: data.garage.nivel || 1
+                });
+            }
+        };
+        cargarStats();
+    }, []);
 
     const handleAddRoutine = () => {
         if (!newLine || !newTime || !onUpdateRoutines) return;
@@ -58,6 +74,23 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                 </div>
 
                 <div className="space-y-5">
+                    {/* Puntos reales (server-side) */}
+                    {stats && (
+                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/15 to-purple-600/15 border border-indigo-500/20">
+                            <div className="bg-luminous-amber/20 p-2.5 rounded-xl border border-luminous-amber/20">
+                                <Trophy className="w-5 h-5 text-luminous-amber" />
+                            </div>
+                            <div>
+                                <p className="font-black text-slate-100 text-lg leading-tight">
+                                    {stats.puntos} {t('profile_points')}
+                                </p>
+                                <p className="text-[11px] text-slate-400 font-bold">
+                                    {t('profile_level')} {stats.nivel}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Language Selector */}
                     <div className="space-y-2 pb-2">
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Idioma / Language</p>
@@ -245,6 +278,21 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                 <ExternalLink size={14} className="text-slate-500" />
                             </a>
 
+                            <a
+                                href="/terminos.html"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full p-3 rounded-2xl flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <FileText className="w-4 h-4 text-slate-400" />
+                                    <span className="text-sm font-bold text-slate-300">
+                                        {language === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions'}
+                                    </span>
+                                </div>
+                                <ExternalLink size={14} className="text-slate-500" />
+                            </a>
+
                             <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-3 shadow-inner">
                                 <div className="flex items-center gap-2 text-red-400 font-bold">
                                     <AlertTriangle size={16} />
@@ -276,25 +324,25 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     </div>
                 </div>
 
-                {/* Presentation Mode Toggle (Hackathon) */}
-                {onTogglePresentationMode && (
+                {/* Modo Demo: datos simulados, claramente rotulados en el mapa */}
+                {onToggleDemoMode && (
                     <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-2xl mt-4 border border-white/5 shadow-inner">
                         <div className="flex items-center gap-2">
-                            <span className="text-xl">🎥</span>
+                            <span className="text-xl">🧪</span>
                             <div>
                                 <p className="font-bold text-slate-200 text-sm">
-                                    {language === 'es' ? 'Modo Presentación' : 'Presentation Mode'}
+                                    {language === 'es' ? 'Modo Demo' : 'Demo Mode'}
                                 </p>
                                 <p className="text-[10px] text-slate-400">
-                                    {language === 'es' ? 'Controles simuladores demo' : 'Demo simulator controls'}
+                                    {language === 'es' ? 'Datos simulados para conocer la app' : 'Simulated data to explore the app'}
                                 </p>
                             </div>
                         </div>
                         <button
-                            onClick={onTogglePresentationMode}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${isPresentationMode ? 'bg-indigo-600' : 'bg-slate-800'}`}
+                            onClick={onToggleDemoMode}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${demoMode ? 'bg-luminous-amber' : 'bg-slate-800'}`}
                         >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isPresentationMode ? 'left-7' : 'left-1'}`} />
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${demoMode ? 'left-7' : 'left-1'}`} />
                         </button>
                     </div>
                 )}

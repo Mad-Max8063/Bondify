@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { UserRole, UserProfile } from '../types';
 import { Geolocation } from '@capacitor/geolocation';
-import { usuariosAPI, colectivosAPI, estadoColectivoAPI } from '../services/api';
-import { rotateTripId, registerPanicCallback, isNearDestination } from '../utils/privacy';
+import { colectivosAPI, estadoColectivoAPI } from '../services/api';
+import { rotateTripId, registerPanicCallback } from '../utils/privacy';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface Location {
     lat: number;
@@ -12,13 +14,16 @@ interface Location {
 interface UseGeolocationParams {
     userId: string;
     profile: UserProfile;
-    setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+    setProfile: Dispatch<SetStateAction<UserProfile>>;
     addPoints: (amount: number) => Promise<void>;
     verificarDesviacion: (lat: number, lng: number) => boolean;
     showDesviacionAlert: boolean;
     setShowDesviacionAlert: (show: boolean) => void;
-    setRutinaUsuario: React.Dispatch<React.SetStateAction<Location[]>>;
+    setRutinaUsuario: Dispatch<SetStateAction<Location[]>>;
 }
+
+// Intervalo de pings GPS. A 10s, un viajero-hora son ~360 writes de Firestore.
+const PING_INTERVAL_MS = 10000;
 
 export const useGeolocation = ({
     userId,
@@ -30,6 +35,8 @@ export const useGeolocation = ({
     setShowDesviacionAlert,
     setRutinaUsuario
 }: UseGeolocationParams) => {
+    const { t } = useLanguage();
+    const { showToast } = useToast();
     const [lineaActual, setLineaActual] = useState<string>('');
     const [ramalActual, setRamalActual] = useState<string>('');
     const [compartiendoUbicacion, setCompartiendoUbicacion] = useState(false);
@@ -107,18 +114,11 @@ export const useGeolocation = ({
         setRamalActual(ramal);
         setCompartiendoUbicacion(true);
 
-        // Registrar usuario en el backend
+        // Registrar usuario en el backend (el server otorga +5 la primera vez que sube)
         try {
-            await estadoColectivoAPI.registrarUsuario(linea, ramal, userId, 'subir');
-
-            // Cargar rutina del usuario si existe
-            const usuario = await usuariosAPI.obtenerPerfil(userId);
-            if (usuario && usuario.rutinas && usuario.rutinas.length > 0) {
-                setRutinaUsuario([
-                    { lat: -34.5828, lng: -58.4215 }, // Plaza Italia
-                    { lat: -34.5650, lng: -58.4400 }, // Belgrano
-                    { lat: -34.5500, lng: -58.4500 }  // Olivos
-                ]);
+            const resultado = await estadoColectivoAPI.registrarUsuario(linea, ramal, userId, 'subir');
+            if (resultado?.puntos > 0) {
+                await addPoints(resultado.puntos);
             }
         } catch (error) {
             console.error('Error inicializando compartir ubicación en backend:', error);
@@ -132,7 +132,7 @@ export const useGeolocation = ({
                 if (permissions.location !== 'granted') {
                     const request = await Geolocation.requestPermissions();
                     if (request.location !== 'granted') {
-                        alert('No se pudo obtener tu ubicación. Por favor, habilitá los permisos de GPS en los ajustes de tu celular.');
+                        showToast(t('geo_permission_denied'), 'error');
                         await detenerCompartirUbicacion();
                         setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
                         return;
@@ -157,19 +157,13 @@ export const useGeolocation = ({
                 }
 
                 // Agregar a ubicaciones recientes
-                let nuevasUbicaciones: Location[] = [];
-                setUbicacionesRecientes(prev => {
-                    nuevasUbicaciones = [...prev.slice(-10), { lat: latitude, lng: longitude }];
-                    return nuevasUbicaciones;
-                });
+                setUbicacionesRecientes(prev => [...prev.slice(-10), { lat: latitude, lng: longitude }]);
 
-                // Verificar desviación después de tener al menos 3 ubicaciones
-                if (nuevasUbicaciones.length >= 3 || stateRef.current.ubicacionesRecientes.length >= 2) {
-                    const checkLocations = nuevasUbicaciones.length >= 3 ? nuevasUbicaciones : [...stateRef.current.ubicacionesRecientes, { lat: latitude, lng: longitude }];
-                    const hayDesviacion = verificarDesviacion(latitude, longitude);
-                    if (hayDesviacion && !stateRef.current.showDesviacionAlert) {
-                        setShowDesviacionAlert(true);
-                    }
+                // Verificar desviación contra la rutina real del usuario (si definió una).
+                // Sin rutina cargada, verificarDesviacion devuelve false y no molesta.
+                const hayDesviacion = verificarDesviacion(latitude, longitude);
+                if (hayDesviacion && !stateRef.current.showDesviacionAlert) {
+                    setShowDesviacionAlert(true);
                 }
 
                 // Enviar ping al backend solo si se confirmó movimiento
@@ -186,19 +180,10 @@ export const useGeolocation = ({
                     console.log('⏳ Esperando movimiento para compartir con la comunidad...');
                 }
 
-                // Protección de destino: Si estamos cerca del destino (simulado), detener GPS
-                const destinoDemo = { lat: -34.5500, lng: -58.4500 };
-                if (isNearDestination(latitude, longitude, destinoDemo.lat, destinoDemo.lng)) {
-                    console.log('🏁 Cerca del destino: Deteniendo GPS por privacidad');
-                    await detenerCompartirUbicacion();
-                    setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-                    alert('🏁 Estás llegando a tu destino. Detuvimos el GPS automáticamente por tu privacidad.');
-                }
-
                 console.log(`📍 GPS compartido (Capacitor): ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
             } catch (error) {
                 console.error('Error obteniendo ubicación Capacitor:', error);
-                alert('Error de GPS: Asegurate de tener la ubicación activada en tu celular.');
+                showToast(t('geo_error'), 'error');
                 await detenerCompartirUbicacion();
                 setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
             }
@@ -207,14 +192,11 @@ export const useGeolocation = ({
         // Enviar ubicación inmediatamente
         await enviarUbicacion();
 
-        // Configurar intervalo para enviar cada 5 segundos
+        // Configurar intervalo de pings
         if (gpsIntervalRef.current) {
             clearInterval(gpsIntervalRef.current);
         }
-        gpsIntervalRef.current = setInterval(enviarUbicacion, 5000);
-
-        // Sumar puntos por activar GPS
-        await addPoints(5);
+        gpsIntervalRef.current = setInterval(enviarUbicacion, PING_INTERVAL_MS);
     };
 
     // Registrar callback de pánico
@@ -222,7 +204,7 @@ export const useGeolocation = ({
         registerPanicCallback(async () => {
             await detenerCompartirUbicacion();
             setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-            alert('🚨 MODO PÁNICO: GPS apagado y datos de sesión borrados por tu seguridad.');
+            showToast(t('panic_activated'), 'error');
         });
 
         return () => {

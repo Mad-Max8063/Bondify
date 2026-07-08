@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { reportesAPI } from '../services/api';
+import { reportesAPI, usuariosAPI } from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface DesvioNotificado {
     linea: string;
@@ -14,6 +16,11 @@ interface UseCommunityReportsParams {
     addPoints: (amount: number) => Promise<void>;
 }
 
+// Polls: pendientes de la línea propia cada 20s (viajando),
+// desvíos confirmados de las líneas favoritas cada 60s (esperando).
+const PENDIENTES_INTERVAL_MS = 20000;
+const DESVIOS_INTERVAL_MS = 60000;
+
 export const useCommunityReports = ({
     userId,
     compartiendoUbicacion,
@@ -21,12 +28,15 @@ export const useCommunityReports = ({
     showDesviacionAlert,
     addPoints
 }: UseCommunityReportsParams) => {
+    const { t } = useLanguage();
+    const { showToast } = useToast();
     const [reportePendiente, setReportePendiente] = useState<any>(null);
     const [showConfirmarDesvio, setShowConfirmarDesvio] = useState(false);
     const [reportesYaVistos, setReportesYaVistos] = useState<string[]>([]);
     const [desvioConfirmado, setDesvioConfirmado] = useState<DesvioNotificado | null>(null);
     const [desviosNotificados, setDesviosNotificados] = useState<string[]>([]);
-    const [lineasFavoritas, setLineasFavoritas] = useState<string[]>(['152', '60', '39']);
+    // Líneas favoritas REALES del perfil del usuario (sin favoritos no se pollea nada)
+    const [lineasFavoritas, setLineasFavoritas] = useState<string[]>([]);
 
     const stateRef = useRef({
         compartiendoUbicacion,
@@ -61,11 +71,27 @@ export const useCommunityReports = ({
         lineasFavoritas
     ]);
 
+    // Cargar las líneas favoritas reales del perfil
+    useEffect(() => {
+        const cargarFavoritas = async () => {
+            try {
+                const usuario = await usuariosAPI.obtenerPerfil(userId);
+                const favoritas = (usuario?.favoritos || []).map((f: any) => String(f.linea));
+                setLineasFavoritas([...new Set(favoritas)] as string[]);
+            } catch (error) {
+                console.error('Error cargando líneas favoritas:', error);
+            }
+        };
+        cargarFavoritas();
+    }, [userId]);
+
     // Verificar reportes pendientes de confirmación cuando estamos viajando
     useEffect(() => {
         if (!compartiendoUbicacion || !lineaActual) return;
 
         const verificarReportesPendientes = async () => {
+            if (document.hidden) return;
+
             const activeLinea = stateRef.current.lineaActual;
             const activeUserId = stateRef.current.userId;
             const activeVistos = stateRef.current.reportesYaVistos;
@@ -92,9 +118,8 @@ export const useCommunityReports = ({
             }
         };
 
-        // Verificar inmediatamente y luego cada 15 segundos
         verificarReportesPendientes();
-        const interval = setInterval(verificarReportesPendientes, 15000);
+        const interval = setInterval(verificarReportesPendientes, PENDIENTES_INTERVAL_MS);
 
         return () => clearInterval(interval);
     }, [compartiendoUbicacion, lineaActual]);
@@ -102,9 +127,12 @@ export const useCommunityReports = ({
     // Verificar desvíos confirmados para usuarios que esperan (líneas favoritas)
     useEffect(() => {
         // Solo verificar si NO estamos viajando (somos usuarios esperando)
-        if (compartiendoUbicacion) return;
+        // y si el usuario tiene favoritas cargadas.
+        if (compartiendoUbicacion || lineasFavoritas.length === 0) return;
 
         const verificarDesviosConfirmados = async () => {
+            if (document.hidden) return;
+
             const activeFavoritas = stateRef.current.lineasFavoritas;
             const activeNotificados = stateRef.current.desviosNotificados;
 
@@ -132,13 +160,12 @@ export const useCommunityReports = ({
             }
         };
 
-        // Verificar cada 30 segundos
-        const interval = setInterval(verificarDesviosConfirmados, 30000);
+        const interval = setInterval(verificarDesviosConfirmados, DESVIOS_INTERVAL_MS);
         // También verificar al montar
         verificarDesviosConfirmados();
 
         return () => clearInterval(interval);
-    }, [compartiendoUbicacion]);
+    }, [compartiendoUbicacion, lineasFavoritas]);
 
     // Handlers para confirmar desvío de otro usuario
     const handleConfirmarDesvioOtro = async () => {
@@ -152,11 +179,14 @@ export const useCommunityReports = ({
             const resultado = await reportesAPI.confirmar(activeReporte.id, userId);
 
             if (resultado?.estadoConfirmacion === 'confirmado') {
-                alert('✅ ¡Desvío confirmado por la comunidad!\n\nLos usuarios que esperan adelante serán notificados.');
-                await addPoints(5);
-            } else {
-                alert(`✅ Confirmación registrada.\n\nFaltan ${resultado?.faltanConfirmaciones || 0} confirmaciones más. +2 puntos`);
-                await addPoints(2);
+                showToast(t('deviation_confirmed_community'), 'success');
+                await addPoints(resultado?.puntos || 5);
+            } else if (resultado?.status === 'ok') {
+                showToast(
+                    t('deviation_confirmation_registered').replace('{n}', String(resultado?.faltanConfirmaciones ?? 0)),
+                    'success'
+                );
+                await addPoints(resultado?.puntos || 2);
             }
         } catch (error) {
             console.error('Error confirmando desvío en el backend:', error);

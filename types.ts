@@ -27,7 +27,7 @@ export interface BusEntity {
   passengers: number; // Number of verifiers
   lastUpdate: number; // Timestamp
   destination: string;
-  arrivalEstimate: number; // Minutes
+  arrivalEstimate: number | null; // Minutos; null = sin datos para estimar (se muestra "—")
   deviationReports?: number;
 }
 
@@ -48,15 +48,6 @@ export interface ChaosReport {
   reactions?: { [emoji: string]: number };
 }
 
-export interface GarageState {
-  level: number;
-  points: number;
-  busColor: string;
-  accessories: string[];
-  happiness: number; // 0 a 100 (Felicidad del Tamagotchi)
-  lastCollaboration: number; // Timestamp de la última acción colaborativa
-}
-
 export interface Routine {
   id: string;
   line: string;
@@ -68,10 +59,9 @@ export interface Routine {
 export interface UserProfile {
   mode: UserMode;
   role: UserRole;
-  garage: GarageState;
   hasOnboarded: boolean;
   routines?: Routine[];
-  isPresentationMode?: boolean;
+  demoMode?: boolean;
 }
 
 export interface DemoAction {

@@ -1,127 +1,161 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Clock, Users, AlertOctagon, Navigation, X, ThumbsUp } from 'lucide-react';
+import { X, ThumbsUp } from 'lucide-react';
 import { reportesAPI } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
-
-// Obtener userId del localStorage
-const getUserId = () => {
-  return localStorage.getItem('miparada_userId') || 'guest-user';
-};
+import { useToast } from '../contexts/ToastContext';
+import { LINEAS_BASE } from '../constants';
+import { Geolocation } from '@capacitor/geolocation';
 
 interface WazeReportButtonProps {
   onReportCreated?: () => void;
+  userLocation?: { lat: number; lng: number } | null;
+  lineaActual?: string;
+  demoMode?: boolean;
 }
 
-export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCreated }) => {
-  const { language } = useLanguage();
+export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCreated, userLocation, lineaActual, demoMode }) => {
+  const { t, language } = useLanguage();
+  const { showToast } = useToast();
   const [showMenu, setShowMenu] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [linea, setLinea] = useState('');
   const [comentario, setComentario] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportTypes = [
-    { 
-      id: 'lleno', 
-      icon: '🚌', 
-      label: language === 'es' ? 'Colectivo lleno' : 'Full bus', 
-      color: 'bg-red-500', 
-      description: language === 'es' ? 'No hay lugar' : 'No seats/room left' 
+    {
+      id: 'lleno',
+      icon: '🚌',
+      label: language === 'es' ? 'Colectivo lleno' : 'Full bus',
+      color: 'bg-red-500',
+      description: language === 'es' ? 'No hay lugar' : 'No seats/room left'
     },
-    { 
-      id: 'vacio', 
-      icon: '✅', 
-      label: language === 'es' ? 'Colectivo vacío' : 'Empty bus', 
-      color: 'bg-green-500', 
-      description: language === 'es' ? 'Hay mucho lugar' : 'Plenty of seats/room' 
+    {
+      id: 'vacio',
+      icon: '✅',
+      label: language === 'es' ? 'Colectivo vacío' : 'Empty bus',
+      color: 'bg-green-500',
+      description: language === 'es' ? 'Hay mucho lugar' : 'Plenty of seats/room'
     },
-    { 
-      id: 'demora', 
-      icon: '⏰', 
-      label: language === 'es' ? 'Gran demora' : 'Heavy delay', 
-      color: 'bg-orange-500', 
-      description: language === 'es' ? 'Mucho tráfico/espera' : 'Heavy traffic/long wait' 
+    {
+      id: 'demora',
+      icon: '⏰',
+      label: language === 'es' ? 'Gran demora' : 'Heavy delay',
+      color: 'bg-orange-500',
+      description: language === 'es' ? 'Mucho tráfico/espera' : 'Heavy traffic/long wait'
     },
-    { 
-      id: 'accidente', 
-      icon: '💥', 
-      label: language === 'es' ? 'Accidente' : 'Accident', 
-      color: 'bg-red-600', 
-      description: language === 'es' ? 'Choque o accidente' : 'Collision or crash' 
+    {
+      id: 'accidente',
+      icon: '💥',
+      label: language === 'es' ? 'Accidente' : 'Accident',
+      color: 'bg-red-600',
+      description: language === 'es' ? 'Choque o accidente' : 'Collision or crash'
     },
-    { 
-      id: 'piquete', 
-      icon: '🚧', 
-      label: language === 'es' ? 'Corte/Piquete' : 'Protest / Roadblock', 
-      color: 'bg-yellow-600', 
-      description: language === 'es' ? 'Calle cortada' : 'Street blocked' 
+    {
+      id: 'piquete',
+      icon: '🚧',
+      label: language === 'es' ? 'Corte/Piquete' : 'Protest / Roadblock',
+      color: 'bg-yellow-600',
+      description: language === 'es' ? 'Calle cortada' : 'Street blocked'
     },
-    { 
-      id: 'inseguridad', 
-      icon: '⚠️', 
-      label: language === 'es' ? 'Zona insegura' : 'Unsafe area', 
-      color: 'bg-purple-600', 
-      description: language === 'es' ? 'Ten precaución' : 'Use caution' 
+    {
+      id: 'inseguridad',
+      icon: '⚠️',
+      label: language === 'es' ? 'Zona insegura' : 'Unsafe area',
+      color: 'bg-purple-600',
+      description: language === 'es' ? 'Ten precaución' : 'Use caution'
     },
-    { 
-      id: 'fantasma', 
-      icon: '👻', 
-      label: language === 'es' ? 'Bondi fantasma' : 'Ghost bus', 
-      color: 'bg-gray-600', 
-      description: language === 'es' ? 'No llegó el colectivo' : 'Bus did not arrive' 
+    {
+      id: 'fantasma',
+      icon: '👻',
+      label: language === 'es' ? 'Bondi fantasma' : 'Ghost bus',
+      color: 'bg-gray-600',
+      description: language === 'es' ? 'No llegó el colectivo' : 'Bus did not arrive'
     },
-    { 
-      id: 'desvio', 
-      icon: '↪️', 
-      label: language === 'es' ? 'Desvío' : 'Route Detour', 
-      color: 'bg-blue-500', 
-      description: language === 'es' ? 'Cambió de ruta' : 'Detoured route' 
+    {
+      id: 'desvio',
+      icon: '↪️',
+      label: language === 'es' ? 'Desvío' : 'Route Detour',
+      color: 'bg-blue-500',
+      description: language === 'es' ? 'Cambió de ruta' : 'Detoured route'
     }
   ];
+
+  const handleOpen = () => {
+    if (demoMode) {
+      showToast(t('demo_blocked_action'), 'info');
+      return;
+    }
+    setLinea(lineaActual || '');
+    setShowMenu(true);
+  };
+
+  // El reporte usa la ubicación REAL del usuario: la del viaje activo si existe,
+  // o una lectura one-shot del GPS. Sin ubicación no se envía (nada inventado).
+  const obtenerUbicacion = async (): Promise<{ lat: number; lng: number } | null> => {
+    if (userLocation && userLocation.lat) return userLocation;
+    try {
+      const permissions = await Geolocation.checkPermissions();
+      if (permissions.location !== 'granted') {
+        const request = await Geolocation.requestPermissions();
+        if (request.location !== 'granted') return null;
+      }
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      return { lat: position.coords.latitude, lng: position.coords.longitude };
+    } catch {
+      return null;
+    }
+  };
 
   const handleSubmitReport = async () => {
     if (!selectedType) return;
 
+    const lineaLimpia = linea.trim();
+    if (!lineaLimpia) {
+      showToast(t('report_need_line'), 'error');
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    const report = reportTypes.find(r => r.id === selectedType);
 
     try {
-      const userId = getUserId();
-      
-      await reportesAPI.crear({
-        userId: userId,
+      const ubicacion = await obtenerUbicacion();
+      if (!ubicacion) {
+        showToast(t('report_need_location'), 'error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const resultado = await reportesAPI.crear({
         tipo: selectedType,
-        linea: '152', // Por ahora hardcoded, se puede mejorar
-        lat: -34.5828,
-        lng: -58.4215,
+        linea: lineaLimpia,
+        lat: ubicacion.lat,
+        lng: ubicacion.lng,
         comentario: comentario
       });
+
+      if (!resultado || resultado.status !== 'ok') {
+        throw new Error('Backend rechazó el reporte');
+      }
 
       // Mostrar confirmación según el tipo de reporte
       const tiposConfirmacion = ['lleno', 'desvio'];
       const requiereConfirmacion = tiposConfirmacion.includes(selectedType);
-      
+
       if (requiereConfirmacion) {
-        const msg = language === 'es'
-          ? `⏳ ¡Reporte enviado! Necesita 3 confirmaciones de otros pasajeros de la línea para hacerse público.\n\n🔒 Por seguridad, los reportes de "${report?.label}" requieren validación comunitaria.`
-          : `⏳ Report submitted! Requires 3 confirmations from other active riders to go public.\n\n🔒 For safety, reports of "${report?.label}" require community validation.`;
-        alert(msg);
+        showToast(t('report_pending_confirmation'), 'success');
       } else {
-        const msg = language === 'es'
-          ? `✅ ¡Muchas gracias! Tu reporte ya está visible para todos los usuarios en el mapa en tiempo real.`
-          : `✅ Thank you! Your report is now live on the map for all riders in real-time.`;
-        alert(msg);
+        showToast(t('report_success'), 'success');
       }
-      
+
       setShowMenu(false);
       setSelectedType(null);
       setComentario('');
-      
+
       if (onReportCreated) onReportCreated();
     } catch (error) {
       console.error('Error enviando reporte:', error);
-      const msg = language === 'es' ? '❌ Error enviando reporte. Intenta de nuevo.' : '❌ Error submitting report. Please try again.';
-      alert(msg);
+      showToast(t('report_error'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +164,7 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
   if (!showMenu) {
     return (
       <button
-        onClick={() => setShowMenu(true)}
+        onClick={handleOpen}
         className="fixed top-20 right-4 w-14 h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-full shadow-[0_4px_20px_rgba(249,115,22,0.4)] flex items-center justify-center text-white text-2xl hover:scale-110 active:scale-95 transition-all z-[9998] animate-pulse border border-white/20"
       >
         ⚠️
@@ -211,9 +245,38 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
                 </div>
               </div>
 
+              {/* Selección de línea (la ubicación sale del GPS real) */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {t('report_which_line')}
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {LINEAS_BASE.map((l) => (
+                    <button
+                      key={l.linea}
+                      onClick={() => setLinea(l.linea)}
+                      className={`p-2.5 rounded-xl font-black text-base transition-all active:scale-95 ${linea === l.linea
+                        ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)] border border-orange-400/40'
+                        : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
+                        }`}
+                    >
+                      {l.linea}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={linea}
+                  onChange={(e) => setLinea(e.target.value)}
+                  placeholder={language === 'es' ? 'U otra línea (ej: 39)' : 'Or another line (e.g. 39)'}
+                  className="w-full px-4 py-2.5 text-center font-bold glass-input border border-slate-700/50 bg-slate-900/50 text-slate-100 rounded-xl focus:border-orange-500 focus:outline-none placeholder-slate-500"
+                />
+              </div>
+
               <textarea
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
+                maxLength={280}
                 placeholder={language === 'es' ? 'Agregá detalles sobre el incidente...' : 'Add details about the incident...'}
                 className="w-full p-4 rounded-xl bg-obsidian-dark border border-slate-700/80 focus:border-orange-500 text-slate-100 focus:outline-none resize-none placeholder-slate-500 transition-colors"
                 rows={3}
@@ -227,16 +290,16 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
                   {language === 'es' ? 'Tip de la comunidad' : 'Community tip'}
                 </p>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  {language === 'es' 
-                    ? 'Cuanto más específico seas, más útil será tu reporte para otros pasajeros que estén esperando la línea.'
-                    : 'The more specific you are, the more helpful your report will be for other riders waiting on the street.'}
+                  {language === 'es'
+                    ? 'Tu reporte se publica con tu ubicación actual. Cuanto más específico seas, más útil será para otros pasajeros de la línea.'
+                    : 'Your report is published with your current location. The more specific you are, the more helpful it will be for other riders.'}
                 </p>
               </div>
             </div>
 
             <button
               onClick={handleSubmitReport}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !linea.trim()}
               className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-lg shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_4px_20px_rgba(249,115,22,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-white/10 hover:brightness-110"
             >
               {isSubmitting ? (

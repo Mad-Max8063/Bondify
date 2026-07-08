@@ -150,16 +150,6 @@ export const MapView: React.FC<MapViewProps> = ({ buses, reports, onBusClick, se
 
         <MapEventListener onReady={onMapReady} />
       </MapContainer>
-
-      {/* Mensaje informativo si los tiles no cargan */}
-      <div className="absolute bottom-4 left-4 z-[100] bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg text-xs max-w-xs">
-        <p className="text-slate-700">
-          <span className="font-bold">🗺️ Mapa Activo:</span> Los colectivos se muestran en tiempo real.
-          <span className="text-slate-500 block mt-1">
-            (Las calles pueden no verse completamente en preview, pero funcionará en producción)
-          </span>
-        </p>
-      </div>
     </div>
   );
 };

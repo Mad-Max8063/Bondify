@@ -129,7 +129,39 @@ type TranslationKeys =
   | 'geo_sharing_verified'
   | 'notif_detour_confirmed_title'
   | 'notif_detour_confirmed_desc'
-  | 'notif_detour_verified_by';
+  | 'notif_detour_verified_by'
+  | 'demo_banner'
+  | 'demo_exit'
+  | 'demo_label'
+  | 'demo_blocked_action'
+  | 'points_earned'
+  | 'deviation_thanks'
+  | 'deviation_reported'
+  | 'route_updated'
+  | 'empty_state_title'
+  | 'empty_state_desc'
+  | 'empty_state_cta'
+  | 'empty_state_demo'
+  | 'notify_bus_near'
+  | 'notify_need_location'
+  | 'feedback_thanks'
+  | 'search_no_results'
+  | 'report_need_line'
+  | 'report_need_location'
+  | 'report_pending_confirmation'
+  | 'report_success'
+  | 'report_error'
+  | 'report_which_line'
+  | 'geo_permission_denied'
+  | 'geo_error'
+  | 'panic_activated'
+  | 'deviation_confirmed_community'
+  | 'deviation_confirmation_registered'
+  | 'install_banner_title'
+  | 'install_banner_desc'
+  | 'install_banner_cta'
+  | 'profile_points'
+  | 'profile_level';
 
 const translations: Record<Language, Record<TranslationKeys, string>> = {
   es: {
@@ -260,6 +292,38 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     notif_detour_confirmed_title: '¡Alerta de Desvío Confirmada!',
     notif_detour_confirmed_desc: 'La Línea {linea} se está desviando de su recorrido habitual.',
     notif_detour_verified_by: 'Verificado por 3 pasajeros a bordo',
+    demo_banner: 'MODO DEMO — datos simulados',
+    demo_exit: 'Salir',
+    demo_label: 'demo',
+    demo_blocked_action: 'Esta acción no está disponible en modo demo. Salí del demo para usar datos reales.',
+    points_earned: '🏆 +{n} puntos',
+    deviation_thanks: 'Gracias por avisar. El colectivo se mostrará en gris (estimado) para otros usuarios.',
+    deviation_reported: 'Reporte de desvío enviado. Otros pasajeros lo van a confirmar.',
+    route_updated: 'Tu ruta habitual se actualizó.',
+    empty_state_title: 'No hay colectivos compartidos ahora',
+    empty_state_desc: 'Bondify se construye entre todos: cuando alguien viaja y comparte su bondi, aparece acá en vivo. Sé el primero de tu línea.',
+    empty_state_cta: 'Compartir mi viaje',
+    empty_state_demo: 'Ver cómo funciona (demo)',
+    notify_bus_near: '🔔 ¡Salí ahora! Tu colectivo está a menos de 600 metros.',
+    notify_need_location: 'Necesitamos tu ubicación para avisarte cuando el bondi esté cerca. Habilitá el GPS y probá de nuevo.',
+    feedback_thanks: '¡Gracias! Tu opinión ayuda a la comunidad.',
+    search_no_results: 'Ahora no hay bondis de la línea {line} compartiendo ubicación.',
+    report_need_line: 'Elegí o escribí la línea del reporte.',
+    report_need_location: 'Necesitamos tu ubicación real para publicar el reporte. Habilitá el GPS y probá de nuevo.',
+    report_pending_confirmation: '⏳ ¡Reporte enviado! Necesita 3 confirmaciones de otros pasajeros para hacerse público.',
+    report_success: '✅ ¡Gracias! Tu reporte ya está visible en el mapa.',
+    report_error: 'No pudimos enviar el reporte. Probá de nuevo en un momento.',
+    report_which_line: '¿De qué línea es el reporte?',
+    geo_permission_denied: 'No se pudo acceder a tu ubicación. Habilitá los permisos de GPS en los ajustes de tu celular.',
+    geo_error: 'Error de GPS: asegurate de tener la ubicación activada.',
+    panic_activated: '🚨 MODO PÁNICO: GPS apagado y datos de sesión borrados por tu seguridad.',
+    deviation_confirmed_community: '✅ ¡Desvío confirmado por la comunidad! Los que esperan más adelante van a ser notificados.',
+    deviation_confirmation_registered: '✅ Confirmación registrada. Faltan {n} confirmaciones más.',
+    install_banner_title: 'Instalá Bondify',
+    install_banner_desc: 'Acceso rápido desde tu pantalla de inicio',
+    install_banner_cta: 'Instalar',
+    profile_points: 'puntos',
+    profile_level: 'Nivel',
   },
   en: {
     app_subtitle: 'Travel better, wait less.',
@@ -389,6 +453,38 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     notif_detour_confirmed_title: 'Route Detour Confirmed!',
     notif_detour_confirmed_desc: 'Line {linea} is detouring from its usual route.',
     notif_detour_verified_by: 'Verified by 3 passengers on board',
+    demo_banner: 'DEMO MODE — simulated data',
+    demo_exit: 'Exit',
+    demo_label: 'demo',
+    demo_blocked_action: 'This action is not available in demo mode. Exit the demo to use real data.',
+    points_earned: '🏆 +{n} points',
+    deviation_thanks: 'Thanks for letting us know. The bus will show as gray (estimated) for other riders.',
+    deviation_reported: 'Detour report submitted. Other riders will confirm it.',
+    route_updated: 'Your usual route was updated.',
+    empty_state_title: 'No shared buses right now',
+    empty_state_desc: 'Bondify is built by its riders: when someone shares their bus, it shows up here live. Be the first on your line.',
+    empty_state_cta: 'Share my ride',
+    empty_state_demo: 'See how it works (demo)',
+    notify_bus_near: '🔔 Head out now! Your bus is less than 600 meters away.',
+    notify_need_location: 'We need your location to alert you when the bus is close. Enable GPS and try again.',
+    feedback_thanks: 'Thanks! Your feedback helps the community.',
+    search_no_results: 'No buses on line {line} are sharing their location right now.',
+    report_need_line: 'Pick or type the line for this report.',
+    report_need_location: 'We need your real location to publish the report. Enable GPS and try again.',
+    report_pending_confirmation: '⏳ Report submitted! It needs 3 confirmations from other riders to go public.',
+    report_success: '✅ Thanks! Your report is now visible on the map.',
+    report_error: 'We could not submit your report. Please try again shortly.',
+    report_which_line: 'Which line is this report for?',
+    geo_permission_denied: 'Could not access your location. Enable GPS permissions in your phone settings.',
+    geo_error: 'GPS error: make sure location is turned on.',
+    panic_activated: '🚨 PANIC MODE: GPS turned off and session data wiped for your safety.',
+    deviation_confirmed_community: '✅ Detour confirmed by the community! Riders waiting ahead will be notified.',
+    deviation_confirmation_registered: '✅ Confirmation registered. {n} more needed.',
+    install_banner_title: 'Install Bondify',
+    install_banner_desc: 'Quick access from your home screen',
+    install_banner_cta: 'Install',
+    profile_points: 'points',
+    profile_level: 'Level',
   },
 };
 

@@ -1,320 +1,233 @@
 import React, { useState, useEffect } from 'react';
 import { BusEntity, BusStatus, UserRole, ChaosReport, ReportType, DemoAction, BusStop } from '../types';
-import { MOCK_BUSES, MOCK_REPORTS } from '../constants';
-import { MOCK_STOPS } from '../stops';
 import { MapView } from './MapView';
 import { Button } from './Button';
-import { analizarIncidente } from '../services/gemini';
-import { colectivosAPI, checkBackendHealth } from '../services/api';
-import { Search, Navigation, Shield, Clock, Users, AlertTriangle, AlertOctagon, X, Check, Loader2, RouteOff } from 'lucide-react';
+import { colectivosAPI, reportesAPI } from '../services/api';
+import { calculateDistance } from '../utils/privacy';
+import { Geolocation } from '@capacitor/geolocation';
+import { Search, Navigation, Shield, Clock, Users, AlertTriangle, X, Check, Bus } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useToast } from '../contexts/ToastContext';
+import { useDemoBuses } from '../hooks/useDemoBuses';
+
+interface Location {
+    lat: number;
+    lng: number;
+}
 
 interface MapInterfaceProps {
     userRole: UserRole;
     onAddPoints: (points: number) => void;
     demoAction?: DemoAction | null;
-    userLocation?: { lat: number; lng: number } | null;
+    userLocation?: Location | null;
+    demoMode: boolean;
+    onRequestTraveler: () => void;
+    onStartDemo: () => void;
 }
 
-export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoints, demoAction, userLocation }) => {
+// Mapear tipos de reporte del backend a los marcadores del mapa
+const TIPO_TO_REPORT_TYPE: Record<string, ReportType> = {
+    piquete: ReportType.PICKET,
+    accidente: ReportType.ACCIDENT,
+    desvio: ReportType.DEVIATION
+};
+
+// Velocidad mínima asumida para estimar arribo (promedio colectivo CABA)
+const MIN_SPEED_KMH = 17;
+
+export const MapInterface: React.FC<MapInterfaceProps> = ({
+    userRole,
+    onAddPoints,
+    demoAction,
+    userLocation,
+    demoMode,
+    onRequestTraveler,
+    onStartDemo
+}) => {
     const { t, language } = useLanguage();
-    const [buses, setBuses] = useState<BusEntity[]>(MOCK_BUSES);
-    const [reports, setReports] = useState<ChaosReport[]>(MOCK_REPORTS);
-    const [stops, setStops] = useState<BusStop[]>(MOCK_STOPS);
+    const { showToast } = useToast();
+    const [buses, setBuses] = useState<BusEntity[]>([]);
+    const [reports, setReports] = useState<ChaosReport[]>([]);
     const [selectedBus, setSelectedBus] = useState<BusEntity | null>(null);
     const [showStopwatch, setShowStopwatch] = useState(false);
-    const [showChaosMenu, setShowChaosMenu] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
-    const [isReporting, setIsReporting] = useState(false);
-    const [useRealData, setUseRealData] = useState(false);
     const [mapInstance, setMapInstance] = useState<any>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [notifyBusId, setNotifyBusId] = useState<string | null>(null);
+    const [watcherLocation, setWatcherLocation] = useState<Location | null>(null);
 
-    // Check backend health and load real data
+    // Simulación SOLO para el modo demo (rotulado con DemoBanner)
+    const demo = useDemoBuses({ active: demoMode, userLocation, language, demoAction });
+
+    const displayBuses = demoMode ? demo.buses : buses;
+    const displayReports = demoMode ? demo.reports : reports;
+    const displayStops: BusStop[] = demoMode ? demo.stops : [];
+
+    // Ubicación de referencia para calcular distancias/ETA
+    const refLocation = userLocation || watcherLocation;
+
+    // Poll del backend: colectivos activos + reportes cercanos.
+    // Pausado con la pestaña oculta para no quemar reads.
     useEffect(() => {
-        const initBackend = async () => {
-            const isHealthy = await checkBackendHealth();
-            if (isHealthy) {
-                console.log('✅ Backend conectado, usando datos reales');
-                setUseRealData(true);
-                loadBusesFromBackend();
-            } else {
-                console.log('⚠️  Backend no disponible, usando datos mock');
-                setUseRealData(false);
+        if (demoMode) return;
+
+        const load = async () => {
+            if (document.hidden) return;
+            const busesFromBackend = await colectivosAPI.obtenerActivos();
+            setBuses(busesFromBackend);
+
+            if (refLocation) {
+                const cercanos = await reportesAPI.cercanos(refLocation.lat, refLocation.lng);
+                setReports(
+                    cercanos
+                        .filter((r: any) => TIPO_TO_REPORT_TYPE[r.tipo] && r.ubicacion)
+                        .map((r: any) => ({
+                            id: r.id,
+                            type: TIPO_TO_REPORT_TYPE[r.tipo],
+                            lat: r.ubicacion.lat,
+                            lng: r.ubicacion.lng,
+                            timestamp: new Date(r.createdAt).getTime()
+                        }))
+                );
             }
         };
 
-        initBackend();
-    }, []);
+        load();
+        const interval = setInterval(load, 12000);
+        return () => clearInterval(interval);
+    }, [demoMode, refLocation?.lat, refLocation?.lng]);
 
-    // Dynamically relocate mock data to user's location for global demo compatibility!
-    useEffect(() => {
-        if (userLocation && userLocation.lat && userLocation.lng) {
-            console.log(`🌍 Relocating demo mock data around user coordinates: [${userLocation.lat}, ${userLocation.lng}]`);
-            
-            const relocatedBuses: BusEntity[] = [
-                {
-                    id: 'b1',
-                    line: language === 'es' ? '152' : 'Line 152',
-                    status: BusStatus.VERIFIED,
-                    lat: userLocation.lat + 0.001,
-                    lng: userLocation.lng - 0.001,
-                    heading: 320,
-                    passengers: 4,
-                    lastUpdate: Date.now(),
-                    destination: language === 'es' ? 'Centro' : 'Downtown',
-                    arrivalEstimate: 3
-                },
-                {
-                    id: 'b2',
-                    line: language === 'es' ? '60' : 'Line 60',
-                    status: BusStatus.GHOST,
-                    lat: userLocation.lat - 0.002,
-                    lng: userLocation.lng + 0.002,
-                    heading: 140,
-                    passengers: 0,
-                    lastUpdate: Date.now() - 300000,
-                    destination: language === 'es' ? 'Terminal' : 'Terminal Station',
-                    arrivalEstimate: 11
-                },
-                {
-                    id: 'b3',
-                    line: language === 'es' ? '29' : 'Line 29',
-                    status: BusStatus.TRAIL,
-                    lat: userLocation.lat + 0.002,
-                    lng: userLocation.lng - 0.002,
-                    heading: 310,
-                    passengers: 0,
-                    lastUpdate: Date.now() - 60000,
-                    destination: language === 'es' ? 'Estación Norte' : 'North Station',
-                    arrivalEstimate: 7
-                }
-            ];
-
-            const relocatedReports: ChaosReport[] = [
-                {
-                    id: 'r1',
-                    type: ReportType.PICKET,
-                    lat: userLocation.lat + 0.0008,
-                    lng: userLocation.lng + 0.0008,
-                    timestamp: Date.now()
-                }
-            ];
-
-            const relocatedStops: BusStop[] = [
-                {
-                    id: 's1',
-                    name: language === 'es' ? 'Parada Plaza Principal' : 'Main Square Station',
-                    lat: userLocation.lat + 0.0005,
-                    lng: userLocation.lng - 0.0005,
-                    lines: ['152', '60']
-                },
-                {
-                    id: 's2',
-                    name: language === 'es' ? 'Estación Central' : 'Central Station',
-                    lat: userLocation.lat - 0.0012,
-                    lng: userLocation.lng + 0.0012,
-                    lines: ['152', '29']
-                },
-                {
-                    id: 's3',
-                    name: language === 'es' ? 'Avenida y 5ta Calle' : 'Avenue & 5th St',
-                    lat: userLocation.lat + 0.0018,
-                    lng: userLocation.lng - 0.0018,
-                    lines: ['60', '29']
-                }
-            ];
-
-            setBuses(relocatedBuses);
-            setReports(relocatedReports);
-            setStops(relocatedStops);
-        }
-    }, [userLocation, language]);
-
-    // Load buses from backend
-    const loadBusesFromBackend = async () => {
-        try {
-            const busesFromBackend = await colectivosAPI.obtenerActivos();
-            if (busesFromBackend.length > 0) {
-                setBuses(busesFromBackend);
-                console.log(`📍 ${busesFromBackend.length} colectivos cargados desde backend`);
-            }
-        } catch (error) {
-            console.error('Error cargando colectivos:', error);
-        }
+    // Calcular ETA honesto: distancia / velocidad (mínimo 17 km/h), o null sin ubicación
+    const computeEta = (bus: BusEntity): number | null => {
+        if (!refLocation) return bus.arrivalEstimate ?? null;
+        const distanciaMetros = calculateDistance(refLocation.lat, refLocation.lng, bus.lat, bus.lng);
+        const speedKmh = MIN_SPEED_KMH;
+        const minutos = Math.max(1, Math.round((distanciaMetros / 1000) / speedKmh * 60));
+        return minutos;
     };
 
-    // Refresh buses from backend every 5 seconds
+    // Mantener el bondi seleccionado sincronizado con el último poll
     useEffect(() => {
-        if (!useRealData) return;
-
-        const interval = setInterval(() => {
-            loadBusesFromBackend();
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, [useRealData]);
-
-    // Handle demo actions
-    useEffect(() => {
-        if (!demoAction) return;
-
-        if (demoAction.type === 'CHAOS') {
-            handleReportChaos(ReportType.BROKEN);
-        } else if (demoAction.type === 'GHOST') {
-            const newBus: BusEntity = {
-                id: `ghost-${Date.now()}`,
-                line: '60',
-                status: BusStatus.VERIFIED,
-                lat: -34.5828 + (Math.random() * 0.002 - 0.001),
-                lng: -58.4215 + (Math.random() * 0.002 - 0.001),
-                heading: 0,
-                passengers: 5,
-                lastUpdate: Date.now(),
-                destination: 'Constitución',
-                arrivalEstimate: 1
-            };
-            setBuses(prev => [...prev, newBus]);
-            setSelectedBus(newBus); // Auto select it
+        if (!selectedBus) return;
+        const updated = displayBuses.find(b => b.id === selectedBus.id);
+        if (updated) {
+            setSelectedBus({ ...updated, arrivalEstimate: demoMode ? updated.arrivalEstimate : computeEta(updated) });
         }
-    }, [demoAction]);
+    }, [displayBuses]);
 
-    // Simulate bus movement only for mock data
+    // "Avisame": chequear proximidad real del bondi elegido en cada actualización
     useEffect(() => {
-        if (useRealData) return; // Don't simulate if using real data
+        if (!notifyBusId || !watcherLocation) return;
+        const bus = displayBuses.find(b => b.id === notifyBusId);
+        if (!bus) return;
 
-        const interval = setInterval(() => {
-            setBuses(currentBuses =>
-                currentBuses.map(bus => {
-                    // Simulate movement generally Northwest (along Av Santa Fe/Cabildo)
-                    // Small delta for lat/lng
-                    const dLat = (Math.random() * 0.0001) - 0.00005; // Jitter
-                    const dLng = (Math.random() * 0.0001) - 0.00005;
-
-                    // General direction drift (North West)
-                    const driftLat = 0.00005; // Moving North (negative lat gets more negative)
-                    const driftLng = 0.00005; // Moving West (negative lng gets more negative)
-
-                    return {
-                        ...bus,
-                        lat: bus.lat - (driftLat * 0.2) + dLat,
-                        lng: bus.lng - (driftLng * 0.2) + dLng
-                    };
-                })
-            );
-        }, 1000); // Slower update for maps
-        return () => clearInterval(interval);
-    }, [useRealData]);
+        const distancia = calculateDistance(watcherLocation.lat, watcherLocation.lng, bus.lat, bus.lng);
+        if (distancia < 600) {
+            showToast(t('notify_bus_near'), 'success');
+            if (navigator.vibrate) navigator.vibrate(300);
+            setNotifyBusId(null);
+        }
+    }, [displayBuses, notifyBusId, watcherLocation]);
 
     const handleBusClick = (bus: BusEntity) => {
-        setSelectedBus(bus);
+        setSelectedBus({ ...bus, arrivalEstimate: demoMode ? bus.arrivalEstimate : computeEta(bus) });
         setShowStopwatch(false);
-        setShowChaosMenu(false);
     };
 
-    const handleNotifyMe = () => {
-        setShowStopwatch(true);
-        setTimeout(() => {
-            alert("🔔 ¡Sal AHORA! Tu colectivo está a la vuelta.");
-        }, 5000);
+    // "Avisame cuando esté llegando": necesita saber dónde está el usuario (one-shot)
+    const handleNotifyMe = async () => {
+        if (!selectedBus) return;
+
+        if (demoMode) {
+            setShowStopwatch(true);
+            setTimeout(() => {
+                showToast(`${t('notify_bus_near')} (${t('demo_label')})`, 'info');
+            }, 5000);
+            return;
+        }
+
+        try {
+            const permissions = await Geolocation.checkPermissions();
+            if (permissions.location !== 'granted') {
+                const request = await Geolocation.requestPermissions();
+                if (request.location !== 'granted') {
+                    showToast(t('notify_need_location'), 'error');
+                    return;
+                }
+            }
+            const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+            setWatcherLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+            setNotifyBusId(selectedBus.id);
+            setShowStopwatch(true);
+        } catch (error) {
+            showToast(t('notify_need_location'), 'error');
+        }
     };
 
     const handleArrived = () => {
         setShowStopwatch(false);
+        setNotifyBusId(null);
         setShowFeedbackModal(true);
     };
 
     const submitFeedback = (type: 'safety' | 'time' | 'thanks') => {
-        onAddPoints(50);
         setShowFeedbackModal(false);
-        alert("¡Gracias! Tu reporte ayuda a toda la comunidad en tiempo real.");
+        showToast(t('feedback_thanks'), 'success');
     };
 
-    const handleReportChaos = async (type: ReportType) => {
-        setIsReporting(true);
+    // Buscador: Enter busca la línea y centra el mapa en el primer resultado
+    const handleSearch = async () => {
+        const query = searchQuery.trim();
+        if (!query) return;
 
-        // Create optimistic report immediately (Mock location)
-        const newReport: ChaosReport = {
-            id: Math.random().toString(),
-            type,
-            lat: -34.5828, // Mock near center
-            lng: -58.4215,
-            timestamp: Date.now()
-        };
-        setReports(prev => [...prev, newReport]);
-
-        // Construct a descriptive text for the AI
-        const description = type === ReportType.PICKET ? "Hay un piquete cortando la calle"
-            : type === ReportType.ACCIDENT ? "Hubo un accidente de tránsito grave"
-                : type === ReportType.BROKEN ? "El colectivo se rompió y nos hicieron bajar"
-                    : type === ReportType.DEVIATION ? "El colectivo se está desviando de su recorrido habitual"
-                        : "La estación de tren/subte está cerrada";
-
-        // Get AI Analysis
-        let consejo = "";
-        try {
-            const analisis = await analizarIncidente(description);
-            consejo = analisis.consejo;
-        } catch (e) {
-            consejo = "Reporte registrado. ¡Gracias!";
-        }
-
-        setIsReporting(false);
-        setShowChaosMenu(false);
-
-        // CRITICAL FIX: Set status to PROBLEM instead of GHOST
-        if (type === ReportType.BROKEN && selectedBus) {
-            setBuses(prev => prev.map(b => b.id === selectedBus.id ? { ...b, status: BusStatus.PROBLEM } : b));
-        }
-
-        // SPECIAL HANDLING: DEVIATION needs confirmations
-        if (type === ReportType.DEVIATION && selectedBus) {
-            setBuses(prev => prev.map(b => {
-                if (b.id === selectedBus.id) {
-                    const newCount = (b.deviationReports || 0) + 1;
-                    // If 3 people report it (simulated threshold), flag it as PROBLEM
-                    if (newCount >= 3) {
-                        return { ...b, status: BusStatus.PROBLEM, deviationReports: newCount };
-                    }
-                    return { ...b, deviationReports: newCount };
-                }
-                return b;
-            }));
-
-            // Simulating other users for demo purposes if count is low
-            const currentCount = (selectedBus.deviationReports || 0) + 1;
-            if (currentCount < 3) {
-                alert(`⚠️ Reporte de Desvío enviado.\nSe necesitan ${3 - currentCount} confirmaciones más de otros pasajeros para alertar a todos.`);
+        if (demoMode) {
+            const match = demo.buses.find(b => b.line.includes(query));
+            if (match && mapInstance) {
+                mapInstance.setView([match.lat, match.lng], 16);
+                setSelectedBus(match);
             } else {
-                alert(`🚨 ¡ALERTA CONFIRMADA!\nEl desvío ha sido verificado por varios pasajeros.`);
+                showToast(t('search_no_results').replace('{line}', query), 'info');
             }
+            return;
         }
 
-        alert(`📢 Consejo de Bondify:\n${consejo}`);
+        const results = await colectivosAPI.buscarPorLinea(query);
+        if (results.length > 0 && mapInstance) {
+            mapInstance.setView([results[0].lat, results[0].lng], 15);
+            setSelectedBus({ ...results[0], arrivalEstimate: computeEta(results[0]) });
+        } else {
+            showToast(t('search_no_results').replace('{line}', query), 'info');
+        }
     };
+
+    const showEmptyState = !demoMode && displayBuses.length === 0 && !selectedBus;
 
     return (
         <div className="relative w-full h-full bg-obsidian overflow-hidden">
 
-            {/* Real Google Map */}
+            {/* Real Map */}
             <MapView
-                buses={buses}
-                reports={reports}
+                buses={displayBuses}
+                reports={displayReports}
                 onBusClick={handleBusClick}
                 selectedBusId={selectedBus?.id}
                 userLocation={userLocation}
                 onMapReady={setMapInstance}
-                stops={stops}
+                stops={displayStops}
             />
 
             {/* UI OVERLAYS (Must be z-index > map) */}
 
             {/* Search Bar & Help Button Container */}
-            <div className="absolute top-4 left-4 right-4 z-20 flex gap-2 pointer-events-auto">
+            <div className={`absolute ${demoMode ? 'top-14' : 'top-4'} left-4 right-4 z-20 flex gap-2 pointer-events-auto`}>
                 <div className="flex-1 glass-card rounded-2xl p-3.5 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
                     <Search className="text-slate-400 w-5 h-5" />
                     <input
                         type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
                         placeholder={t('map_search_placeholder')}
                         className="flex-1 bg-transparent outline-none text-slate-100 font-medium placeholder-slate-400 text-sm"
                     />
@@ -327,6 +240,36 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                 </button>
             </div>
 
+            {/* Estado vacío honesto: sin bondis activos en este momento */}
+            {showEmptyState && (
+                <div className="absolute bottom-24 left-4 right-4 z-20 pointer-events-auto animate-in slide-in-from-bottom duration-500">
+                    <div className="glass-card border border-slate-700/50 rounded-3xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.4)] text-center space-y-4">
+                        <div className="w-14 h-14 bg-indigo-500/15 border border-indigo-500/20 rounded-full flex items-center justify-center mx-auto">
+                            <Bus className="w-7 h-7 text-indigo-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-slate-100">{t('empty_state_title')}</h3>
+                            <p className="text-sm text-slate-400 mt-1 leading-relaxed">{t('empty_state_desc')}</p>
+                        </div>
+                        <div className="space-y-2">
+                            <button
+                                onClick={onRequestTraveler}
+                                className="w-full bg-gradient-to-r from-luminous-green to-emerald-600 text-white py-3.5 rounded-2xl font-black text-sm shadow-[0_4px_20px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Navigation className="w-4 h-4" />
+                                {t('empty_state_cta')}
+                            </button>
+                            <button
+                                onClick={onStartDemo}
+                                className="w-full bg-white/5 border border-white/10 text-slate-300 py-3 rounded-2xl font-bold text-sm hover:bg-white/10 transition-all active:scale-95"
+                            >
+                                {t('empty_state_demo')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Bottom Sheet / Info Card */}
             {selectedBus && !showFeedbackModal && (
                 <div className={`absolute bottom-20 left-4 right-4 glass-card rounded-3xl p-5 z-30 animate-in slide-in-from-bottom duration-300 pointer-events-auto border transition-all ${
@@ -334,6 +277,12 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                     selectedBus.status === BusStatus.PROBLEM ? 'glow-red border-red-500/30' :
                     'border-slate-700/50 shadow-[0_10px_35px_rgba(0,0,0,0.4)]'
                 }`}>
+                    <button
+                        onClick={() => { setSelectedBus(null); setShowStopwatch(false); setNotifyBusId(null); }}
+                        className="absolute top-3 right-3 p-1.5 text-slate-500 hover:text-slate-300 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                        <X size={16} />
+                    </button>
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <div className="flex items-center gap-2">
@@ -345,9 +294,9 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                         <Shield size={10} /> {t('map_status_verified')}
                                     </span>
                                 )}
-                                {selectedBus.status === BusStatus.GHOST && (
+                                {(selectedBus.status === BusStatus.GHOST || selectedBus.status === BusStatus.ESTIMATED) && (
                                     <span className="bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-1 rounded-lg">
-                                        {language === 'es' ? 'Datos Oficiales' : 'Official Schedule'}
+                                        {language === 'es' ? 'Estimado' : 'Estimated'}
                                     </span>
                                 )}
                                 {selectedBus.status === BusStatus.PROBLEM && (
@@ -360,10 +309,14 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                 {language === 'es' ? `Hacia ${selectedBus.destination}` : `To ${selectedBus.destination}`}
                             </p>
                         </div>
-                        <div className="text-right">
-                            <p className="text-3xl font-black text-indigo-400">{selectedBus.arrivalEstimate}'</p>
+                        <div className="text-right mr-6">
+                            <p className="text-3xl font-black text-indigo-400">
+                                {selectedBus.arrivalEstimate !== null ? `${selectedBus.arrivalEstimate}'` : '—'}
+                            </p>
                             <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">
-                                {language === 'es' ? 'minutos' : 'minutes'}
+                                {selectedBus.arrivalEstimate !== null
+                                    ? (language === 'es' ? 'minutos aprox.' : 'approx. minutes')
+                                    : (language === 'es' ? 'sin datos' : 'no data')}
                             </p>
                         </div>
                     </div>
@@ -397,7 +350,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                     <Clock className="text-red-400 w-5 h-5 animate-pulse" />
                                     <div>
                                         <p className="font-bold text-red-400 text-sm">{language === 'es' ? 'Esperando...' : 'Waiting...'}</p>
-                                        <p className="text-[9px] text-red-500">{language === 'es' ? 'Te notificaremos' : 'We will notify you'}</p>
+                                        <p className="text-[9px] text-red-500">{language === 'es' ? 'Te avisamos cuando esté cerca' : 'We will notify you when close'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -407,8 +360,8 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                         </div>
                     ) : (
                         <Button variant={selectedBus.status === BusStatus.PROBLEM ? 'danger' : 'primary'} fullWidth onClick={handleNotifyMe}>
-                            {selectedBus.status === BusStatus.PROBLEM 
-                                ? (language === 'es' ? 'AVISARME IGUAL' : 'NOTIFY ME ANYWAY') 
+                            {selectedBus.status === BusStatus.PROBLEM
+                                ? (language === 'es' ? 'AVISARME IGUAL' : 'NOTIFY ME ANYWAY')
                                 : (language === 'es' ? 'AVISARME CUANDO ESTÉ LLEGANDO' : 'NOTIFY ME ON ARRIVAL')}
                         </Button>
                     )}
@@ -449,11 +402,11 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
             {/* FAB for Recenter */}
             <button
                 onClick={() => {
-                    if (mapInstance && userLocation) {
-                        mapInstance.setView([userLocation.lat, userLocation.lng], 16);
+                    if (mapInstance && refLocation) {
+                        mapInstance.setView([refLocation.lat, refLocation.lng], 16);
                     }
                 }}
-                className={`absolute bottom-24 right-4 p-3 rounded-full shadow-lg transition-all z-20 pointer-events-auto border ${userLocation ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)]' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                className={`absolute bottom-24 right-4 p-3 rounded-full shadow-lg transition-all z-20 pointer-events-auto border ${refLocation ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)]' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
             >
                 <Navigation className="w-6 h-6" />
             </button>
@@ -488,7 +441,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                         <div>
                                             <p className="font-bold text-slate-200">{language === 'es' ? 'VERIFICADO (En Vivo)' : 'VERIFIED (Live)'}</p>
                                             <p className="text-slate-400 text-[11px] mt-0.5">
-                                                {language === 'es' 
+                                                {language === 'es'
                                                     ? '¡Ubicación 100% real! Pasajeros activos a bordo comparten su viaje de forma anónima.'
                                                     : '100% real position! Active riders on board are anonymously broadcasting the bus details.'}
                                             </p>
@@ -498,11 +451,11 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                     <div className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
                                         <div className="w-3.5 h-3.5 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.5)] mt-0.5" />
                                         <div>
-                                            <p className="font-bold text-slate-200">{language === 'es' ? 'ESTIMADO / PROGRAMADO' : 'SCHEDULED / GHOST'}</p>
+                                            <p className="font-bold text-slate-200">{language === 'es' ? 'ESTIMADO' : 'ESTIMATED'}</p>
                                             <p className="text-slate-400 text-[11px] mt-0.5">
-                                                {language === 'es' 
-                                                    ? 'Ubicación estimada según frecuencias programadas de la empresa (sin señal GPS en vivo).'
-                                                    : 'Estimated frequency location based on official transit agency timetables (no active GPS).'}
+                                                {language === 'es'
+                                                    ? 'Última posición conocida: ya no hay pasajeros compartiendo en vivo.'
+                                                    : 'Last known position: no riders are currently sharing live updates.'}
                                             </p>
                                         </div>
                                     </div>
@@ -512,7 +465,7 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({ userRole, onAddPoint
                                         <div>
                                             <p className="font-bold text-slate-200">{language === 'es' ? 'ALERTA / DEMORA / DESVÍO' : 'ALERT / DELAY / DETOUR'}</p>
                                             <p className="text-slate-400 text-[11px] mt-0.5">
-                                                {language === 'es' 
+                                                {language === 'es'
                                                     ? 'Desvíos de ruta confirmados o demoras inusuales reportadas en vivo por la comunidad.'
                                                     : 'Detour routes or heavy traffic delays reported in real-time by riders.'}
                                             </p>

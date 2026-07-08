@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { UserMode, UserRole, UserProfile, GarageState, Routine, DemoAction } from './types';
-import { INITIAL_GARAGE } from './constants';
+import { UserMode, UserRole, UserProfile, Routine, DemoAction } from './types';
 import { Onboarding } from './components/Onboarding';
 import { MapInterface } from './components/MapInterface';
 import { ProfileSettings } from './components/ProfileSettings';
 import { SmartNudge } from './components/SmartNudge';
 import { DemoControls } from './components/DemoControls';
+import { DemoBanner } from './components/DemoBanner';
 import { Favoritos } from './components/Favoritos';
 import { Historial } from './components/Historial';
 import { WazeReportButton } from './components/WazeReportButton';
@@ -17,6 +17,7 @@ import { DesvioNotificacion } from './components/DesvioNotificacion';
 import { InstallGuide } from './components/InstallGuide';
 import { Map, Power, User, Star, Clock } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
+import { useToast } from './contexts/ToastContext';
 import { usuariosAPI, colectivosAPI } from './services/api';
 import {
     rotateTripId,
@@ -40,19 +41,18 @@ const getUserId = () => {
 
 const App: React.FC = () => {
     const { t } = useLanguage();
+    const { showToast } = useToast();
     const [userId] = useState(getUserId());
     const [profile, setProfile] = useState<UserProfile>({
         mode: UserMode.EFFICIENT,
         role: UserRole.WAITER,
-        garage: INITIAL_GARAGE,
         hasOnboarded: false,
-        isPresentationMode: false
+        demoMode: false
     });
 
     const [showProfileSettings, setShowProfileSettings] = useState(false);
     const [showFavoritos, setShowFavoritos] = useState(false);
     const [showHistorial, setShowHistorial] = useState(false);
-    const [showTravelerNudge, setShowTravelerNudge] = useState(false);
     const [nudgeRoutine, setNudgeRoutine] = useState<Routine | null>(null);
     const [demoAction, setDemoAction] = useState<DemoAction | null>(null);
     const [showActivarViajero, setShowActivarViajero] = useState(false);
@@ -97,8 +97,12 @@ const App: React.FC = () => {
         }));
     };
 
-    const handleTogglePresentationMode = () => {
-        setProfile(prev => ({ ...prev, isPresentationMode: !prev.isPresentationMode }));
+    const handleToggleDemoMode = () => {
+        setProfile(prev => ({ ...prev, demoMode: !prev.demoMode }));
+    };
+
+    const handleExitDemo = () => {
+        setProfile(prev => ({ ...prev, demoMode: false }));
     };
 
     const handleDemoNudge = () => {
@@ -118,8 +122,11 @@ const App: React.FC = () => {
         setDemoAction({ type: 'GHOST', id: Date.now() });
     };
 
+    // Los puntos los otorga SIEMPRE el servidor; esto solo notifica en la UI.
     const addPoints = async (amount: number) => {
-        console.log(`[Points] +${amount} points for collaborative action.`);
+        if (amount > 0) {
+            showToast(t('points_earned').replace('{n}', String(amount)), 'success');
+        }
     };
 
     // 1. Hook para verificar desviaciones de la ruta habitual
@@ -154,6 +161,7 @@ const App: React.FC = () => {
     // 3. Hook para validar socialmente los reportes de desvíos y recibir alertas
     const {
         reportePendiente,
+        setReportePendiente,
         showConfirmarDesvio,
         setShowConfirmarDesvio,
         desvioConfirmado,
@@ -168,24 +176,26 @@ const App: React.FC = () => {
         addPoints
     });
 
-    const toggleRole = () => {
-        const nuevoRole = profile.role === UserRole.WAITER ? UserRole.TRAVELER : UserRole.WAITER;
+    const abrirModoViajero = () => {
+        if (profile.demoMode) {
+            showToast(t('demo_blocked_action'), 'info');
+            return;
+        }
+        setShowActivarViajero(true);
+    };
 
-        if (nuevoRole === UserRole.TRAVELER) {
-            // Activar modo viajero - mostrar modal para seleccionar línea
-            // Nota: el estado 'showActivarViajero' debería ser manejado a través del hook si se desea consistencia total
-            // Manteniendo lógica de estado local original por compatibilidad con el componente
+    const toggleRole = () => {
+        if (profile.role === UserRole.WAITER) {
+            // Activar modo viajero: el rol cambia recién cuando el usuario
+            // confirma línea y consentimiento en el modal.
+            abrirModoViajero();
         } else {
             // Desactivar modo viajero
             detenerCompartirUbicacion();
             // Rotar ID de viaje por privacidad al terminar viaje
             rotateTripId();
+            setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
         }
-
-        setProfile(prev => ({
-            ...prev,
-            role: nuevoRole
-        }));
     };
 
     // Handlers para el alert de desviación de ruta
@@ -193,7 +203,7 @@ const App: React.FC = () => {
         setShowDesviacionAlert(false);
         await detenerCompartirUbicacion();
         setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
-        alert('✅ Gracias por avisar. El colectivo se mostrará en gris (estimado) para otros usuarios.');
+        showToast(t('deviation_thanks'), 'success');
     };
 
     const handleConfirmarDesvio = async () => {
@@ -207,8 +217,7 @@ const App: React.FC = () => {
                 lat: ubicacionesRecientes[ubicacionesRecientes.length - 1]?.lat || -34.58,
                 lng: ubicacionesRecientes[ubicacionesRecientes.length - 1]?.lng || -58.42
             });
-            await addPoints(10);
-            alert('✅ Reporte de desvío enviado. +10 puntos');
+            showToast(t('deviation_reported'), 'success');
         } catch (error) {
             console.error('Error creando reporte de desvío:', error);
         }
@@ -218,7 +227,7 @@ const App: React.FC = () => {
         setShowDesviacionAlert(false);
         // Actualizar la rutina del usuario con las nuevas ubicaciones
         setRutinaUsuario(prev => [...prev, ...ubicacionesRecientes.slice(-3)]);
-        alert('✅ Tu ruta habitual se actualizó.');
+        showToast(t('route_updated'), 'success');
     };
 
     // Smart Routine Polling
@@ -278,11 +287,15 @@ const App: React.FC = () => {
                     onAddPoints={addPoints}
                     demoAction={demoAction}
                     userLocation={userLocation}
+                    demoMode={!!profile.demoMode}
+                    onRequestTraveler={abrirModoViajero}
+                    onStartDemo={() => setProfile(prev => ({ ...prev, demoMode: true }))}
                 />
 
+                {/* Banner fijo mientras el modo demo está activo */}
+                {profile.demoMode && <DemoBanner onExit={handleExitDemo} />}
 
-
-                {profile.isPresentationMode && (
+                {profile.demoMode && (
                     <DemoControls
                         onTriggerNudge={handleDemoNudge}
                         onTriggerChaos={handleDemoChaos}
@@ -291,43 +304,13 @@ const App: React.FC = () => {
                 )}
             </div>
 
-            {/* Traveler Nudge Modal (Mock) */}
-            {showTravelerNudge && (
-                <div className="fixed top-4 left-4 right-4 bg-slate-900 text-white p-4 rounded-xl shadow-2xl z-50 animate-in slide-in-from-top duration-500">
-                    <div className="flex items-start gap-3">
-                        <span className="text-2xl">👋</span>
-                        <div className="flex-1">
-                            <h4 className="font-bold">¡Parece que ya subiste!</h4>
-                            <p className="text-sm text-slate-300 mt-1">¿Ayudamos a los demás compartiendo tu viaje de forma anónima?</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 mt-4">
-                        <button
-                            onClick={() => {
-                                setShowTravelerNudge(false);
-                                addPoints(20);
-                                // Add verification logic
-                            }}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold text-sm"
-                        >
-                            SÍ, VERIFICAR ✅
-                        </button>
-                        <button
-                            onClick={() => setShowTravelerNudge(false)}
-                            className="px-4 py-2 text-slate-400 hover:text-white text-sm font-medium"
-                        >
-                            Ahora no
-                        </button>
-                    </div>
-                </div>
-            )}
-
             {/* Modal para activar modo viajero */}
             {showActivarViajero && (
                 <ActivarViajeroModal
                     onActivar={(linea, ramal) => {
-                        iniciarCompartirUbicacion(linea, ramal);
                         setShowActivarViajero(false);
+                        setProfile(prev => ({ ...prev, role: UserRole.TRAVELER }));
+                        iniciarCompartirUbicacion(linea, ramal);
                     }}
                     onCancelar={() => setShowActivarViajero(false)}
                     routines={profile.routines}
@@ -339,14 +322,23 @@ const App: React.FC = () => {
                 <CompartiendoUbicacion
                     linea={lineaActual}
                     ramal={ramalActual}
-                    onDetener={detenerCompartirUbicacion}
+                    onDetener={() => {
+                        detenerCompartirUbicacion();
+                        rotateTripId();
+                        setProfile(prev => ({ ...prev, role: UserRole.WAITER }));
+                    }}
                     usuariosViendote={0} // No se usa más el número exacto
                     onPanic={activatePanicMode}
                 />
             )}
 
             {/* Botón de Reporte estilo Waze - se coloca aquí para tener mayor z-index */}
-            <WazeReportButton onReportCreated={() => addPoints(10)} />
+            <WazeReportButton
+                onReportCreated={() => addPoints(10)}
+                userLocation={userLocation}
+                lineaActual={lineaActual}
+                demoMode={!!profile.demoMode}
+            />
 
             {/* Alert de desviación de ruta */}
             {showDesviacionAlert && (
@@ -397,8 +389,8 @@ const App: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <span className="text-2xl">📱</span>
                         <div className="flex-1">
-                            <p className="font-bold">Instalá Bondify</p>
-                            <p className="text-xs text-indigo-100">Acceso rápido desde tu pantalla de inicio</p>
+                            <p className="font-bold">{t('install_banner_title')}</p>
+                            <p className="text-xs text-indigo-100">{t('install_banner_desc')}</p>
                         </div>
                         <button
                             onClick={() => {
@@ -407,7 +399,7 @@ const App: React.FC = () => {
                             }}
                             className="bg-white text-indigo-600 px-3 py-1 rounded-lg text-sm font-bold"
                         >
-                            Instalar
+                            {t('install_banner_cta')}
                         </button>
                         <button
                             onClick={() => {
@@ -430,8 +422,8 @@ const App: React.FC = () => {
                     onModeChange={handleModeChange}
                     onUpdateRoutines={handleUpdateRoutines}
                     onClose={() => setShowProfileSettings(false)}
-                    isPresentationMode={profile.isPresentationMode}
-                    onTogglePresentationMode={handleTogglePresentationMode}
+                    demoMode={!!profile.demoMode}
+                    onToggleDemoMode={handleToggleDemoMode}
                 />
             )}
 
@@ -491,7 +483,7 @@ const App: React.FC = () => {
                                 setShowFavoritos(false);
                                 setShowHistorial(false);
                             }}
-                            className="w-15 h-15 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.6)] active:scale-95 transition-all border-[3px] border-obsidian-light"
+                            className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.6)] active:scale-95 transition-all border-[3px] border-obsidian-light"
                         >
                             <Map className="w-6 h-6" />
                         </button>
