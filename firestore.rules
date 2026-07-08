@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Deny-all: el frontend NO tiene SDK de Firebase; todo el acceso a datos
+    // pasa por el backend Express con firebase-admin (que bypassea estas
+    // reglas por diseño). Si algún día se agrega un cliente web/mobile con
+    // SDK, estas reglas hay que repensarlas.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
