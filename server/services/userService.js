@@ -19,25 +19,6 @@ class UserService {
     }
 
     /**
-     * Obtener usuario por Email
-     * @param {string} email 
-     */
-    async getUserByEmail(email) {
-        try {
-            const snapshot = await db.collection(USERS_COLLECTION)
-                .where('email', '==', email)
-                .limit(1)
-                .get();
-
-            if (snapshot.empty) return null;
-            return snapshot.docs[0].data();
-        } catch (error) {
-            console.error('Error getting user by email:', error);
-            throw error;
-        }
-    }
-
-    /**
      * Crear o actualizar usuario
      * @param {string} userId 
      * @param {Object} data 

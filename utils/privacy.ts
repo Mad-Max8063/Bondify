@@ -1,8 +1,4 @@
 /**
- * (c) 2026 Bondify. All rights reserved.
- * Proprietary and Confidential.
- */
-/**
  * Utilidades de privacidad para Bondify
  * 
  * Protege la identidad y ubicación de los usuarios mientras

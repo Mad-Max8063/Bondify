@@ -8,7 +8,6 @@ import { fileURLToPath } from 'url';
 // Routes
 import bondiRoutes from './routes/bondiRoutes.js';
 import usuarioRoutes from './routes/usuarioRoutes.js';
-import authRoutes from './routes/authRoutes.js';
 import proxyRoutes from './routes/proxyRoutes.js';
 import reportesRoutes from './routes/reportesRoutes.js';
 import estadoColectivoRoutes from './routes/estadoColectivoRoutes.js';
@@ -67,7 +66,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/bondi', bondiRoutes);
 app.use('/api/usuario', usuarioRoutes);
 app.use('/api/reportes', reportesRoutes);

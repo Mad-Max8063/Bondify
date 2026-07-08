@@ -1,7 +1,3 @@
-/**
- * (c) 2026 Bondify. All rights reserved.
- * Proprietary and Confidential.
- */
 import React, { useState, useEffect } from 'react';
 import { UserMode, UserRole, UserProfile, GarageState, Routine, DemoAction } from './types';
 import { INITIAL_GARAGE } from './constants';

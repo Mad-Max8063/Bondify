@@ -1,7 +1,3 @@
-/**
- * (c) 2026 Bondify. All rights reserved.
- * Proprietary and Confidential.
- */
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, ZoomControl, useMap } from 'react-leaflet';
 import { BusEntity, ChaosReport, BusStop } from '../types';

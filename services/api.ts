@@ -1,7 +1,3 @@
-/**
- * (c) 2026 Bondify. All rights reserved.
- * Proprietary and Confidential.
- */
 import axios from 'axios';
 import { BusEntity, BusStatus, ChaosReport, ReportType } from '../types';
 import { fuzzCoordinates, getTripId } from '../utils/privacy';
