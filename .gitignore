@@ -40,3 +40,7 @@ Desktop.ini
 
 # Build artifacts
 *.tsbuildinfo
+
+# Internal agent directories
+.agent
+.emergent
