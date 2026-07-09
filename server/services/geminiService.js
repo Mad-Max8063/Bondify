@@ -6,41 +6,48 @@ function getApiKey() {
   return process.env.GEMINI_API_KEY || process.env.API_KEY;
 }
 
-// Mock Logic Helper
-function mockAnalisis(texto) {
+// Clasificación local por keywords: cubre los reportes obvios sin gastar cuota.
+function analisisPorKeywords(texto) {
   const t = texto.toLowerCase();
   let cat = 'DATO_IRRELEVANTE';
+  let resumen = 'Reporte de un pasajero en la zona.';
   let consejo = 'Gracias por avisar.';
   let gravedad = 0;
 
   if (t.includes('piquete') || t.includes('corte') || t.includes('manifestacion')) {
-    cat = 'PIQUETE'; consejo = 'Evitá la zona, buscá calles paralelas.'; gravedad = 0.8;
+    cat = 'PIQUETE'; resumen = 'Corte o manifestación reportada en la zona.'; consejo = 'Evitá la zona o buscá calles alternativas.'; gravedad = 0.8;
   } else if (t.includes('choque') || t.includes('accidente') || t.includes('vuelco')) {
-    cat = 'ACCIDENTE'; consejo = 'Si podés, desviate antes de llegar.'; gravedad = 0.9;
+    cat = 'ACCIDENTE'; resumen = 'Accidente de tránsito reportado en la zona.'; consejo = 'Si podés, desviate antes de llegar.'; gravedad = 0.9;
   } else if (t.includes('robo') || t.includes('ladron') || t.includes('inseguros')) {
-    cat = 'INSEGURIDAD'; consejo = 'Guardá el celular y mantente alerta.'; gravedad = 1.0;
+    cat = 'INSEGURIDAD'; resumen = 'Hecho de inseguridad reportado en la zona.'; consejo = 'Guardá el celular y mantenete alerta.'; gravedad = 1.0;
   } else if (t.includes('demora') || t.includes('tarda') || t.includes('lento')) {
-    cat = 'DEMORA'; consejo = 'Paciencia, hoy todos van lento.'; gravedad = 0.4;
+    cat = 'DEMORA'; resumen = 'Demoras reportadas en el servicio.'; consejo = 'Tené en cuenta unos minutos extra de viaje.'; gravedad = 0.4;
   } else if (t.includes('desvio') || t.includes('desvío')) {
-    cat = 'DESVIO'; consejo = 'Seguí las indicaciones del chofer.'; gravedad = 0.5;
+    cat = 'DESVIO'; resumen = 'Desvío reportado en el recorrido.'; consejo = 'Seguí las indicaciones del chofer.'; gravedad = 0.5;
   }
 
   return JSON.stringify({
     categoria: cat,
     gravedad: gravedad,
-    resumen_corto: "Reporte simulado (Sin API Key)",
+    resumen_corto: resumen,
     consejo: consejo,
     es_peligroso: gravedad > 0.7
   });
 }
 
 async function analizarIncidente(textoReporte) {
-  const apiKey = getApiKey();
+  // Keywords primero: el free tier de Gemini da apenas 20 requests/día por
+  // modelo, así que el modelo queda reservado para los textos ambiguos que
+  // el matching local no sabe clasificar.
+  const porKeywords = analisisPorKeywords(textoReporte);
+  if (JSON.parse(porKeywords).categoria !== 'DATO_IRRELEVANTE') {
+    return porKeywords;
+  }
 
-  // --- MOCK CHECK ---
+  const apiKey = getApiKey();
   if (!apiKey || apiKey === 'tu_clave_gemini') {
     console.log("🔮 Gemini Mock: Analizando texto localmente...");
-    return mockAnalisis(textoReporte);
+    return porKeywords;
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -78,8 +85,8 @@ async function analizarIncidente(textoReporte) {
     return response.text;
   } catch (error) {
     console.error("Error en Gemini Service:", error);
-    // Devuelve un JSON fallback por si falla la API
-    return mockAnalisis(textoReporte);
+    // Fallback por si falla la API (cuota agotada, red, etc.)
+    return porKeywords;
   }
 }
 
