@@ -138,7 +138,7 @@ export const ConfirmarDesvioAlert: React.FC<ConfirmarDesvioAlertProps> = ({
           </div>
 
           {/* Info adicional */}
-          <div className="bg-led-400/10 border border-led-500/20 rounded-card p-4 text-[10px] text-led-200 leading-relaxed">
+          <div className="bg-led-400/10 border border-led-500/20 rounded-card p-4 text-2xs text-led-200 leading-relaxed">
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-led-400" />
               <p>

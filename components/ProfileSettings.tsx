@@ -140,7 +140,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                             <Users className="w-5 h-5 text-led-400" />
                             <div>
                                 <p className="font-bold text-led-300 text-sm">{language === 'es' ? 'Modo Invitado' : 'Guest Mode'}</p>
-                                <p className="text-[10px] text-led-400/80 leading-tight">
+                                <p className="text-2xs text-led-400/80 leading-tight">
                                     {language === 'es' ? 'Estás en una sesión temporal. Los datos no se guardarán al salir.' : 'You are in a temporary guest session. Your data will not be saved.'}
                                 </p>
                             </div>
@@ -234,7 +234,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                 />
                                 <div className="flex gap-2">
                                     <div className="flex-1">
-                                        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider ml-1">
+                                        <label className="text-2xs text-zinc-500 font-bold uppercase tracking-wider ml-1">
                                             {language === 'es' ? 'Ida' : 'Outbound'}
                                         </label>
                                         <input
@@ -245,7 +245,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider ml-1">
+                                        <label className="text-2xs text-zinc-500 font-bold uppercase tracking-wider ml-1">
                                             {language === 'es' ? 'Vuelta (Opcional)' : 'Return (Optional)'}
                                         </label>
                                         <input
@@ -311,11 +311,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                         <div className="p-4 rounded-card bg-danger/10 border border-danger/20 space-y-3">
                             <div className="flex items-center gap-2 text-danger font-bold">
                                 <AlertTriangle size={16} />
-                                <p className="text-[10px] uppercase tracking-widest font-bold">
+                                <p className="text-2xs uppercase tracking-widest font-bold">
                                     {language === 'es' ? 'Zona de Riesgo' : 'Danger Zone'}
                                 </p>
                             </div>
-                            <p className="text-[10px] text-danger/90 leading-relaxed font-medium">
+                            <p className="text-2xs text-danger/90 leading-relaxed font-medium">
                                 {language === 'es'
                                     ? 'Esto eliminará permanentemente tus favoritos, rutinas y ID anónimo de este dispositivo de forma definitiva.'
                                     : 'This will permanently delete your saved favorites, routine paths, and anonymous user ID from this browser.'}
@@ -341,7 +341,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                 <p className="font-bold text-zinc-200 text-sm">
                                     {language === 'es' ? 'Modo Demo' : 'Demo Mode'}
                                 </p>
-                                <p className="text-[10px] text-zinc-400">
+                                <p className="text-2xs text-zinc-400">
                                     {language === 'es' ? 'Datos simulados para conocer la app' : 'Simulated data to explore the app'}
                                 </p>
                             </div>
@@ -355,7 +355,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     </div>
                 )}
 
-                <p className="mt-8 text-center text-[10px] text-zinc-500 font-medium">
+                <p className="mt-8 text-center text-2xs text-zinc-500 font-medium">
                     {language === 'es' ? 'Podés cambiar esto cuando quieras.' : 'You can change this at any time.'}
                 </p>
             </div>

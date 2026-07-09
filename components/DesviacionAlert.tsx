@@ -112,7 +112,7 @@ export const DesviacionAlert: React.FC<DesviacionAlertProps> = ({
           </div>
 
           {/* Info adicional */}
-          <div className="bg-white/[0.03] border border-white/5 rounded-card p-3.5 text-[10px] text-zinc-400 leading-relaxed">
+          <div className="bg-white/[0.03] border border-white/5 rounded-card p-3.5 text-2xs text-zinc-400 leading-relaxed">
             <p className="font-bold mb-1 text-zinc-200 flex items-center gap-1.5">
               <Lightbulb className="w-3.5 h-3.5 shrink-0" />
               {language === 'es' ? '¿Por qué preguntamos?' : 'Why are we asking?'}

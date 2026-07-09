@@ -22,10 +22,6 @@ export default {
         ok: { DEFAULT: SEMANTIC.ok, dim: SEMANTIC.okDim },
         danger: { DEFAULT: SEMANTIC.danger, dim: SEMANTIC.dangerDim },
         gps: SEMANTIC.gps,
-        // DEPRECADOS: alias de la paleta vieja, se eliminan en la fase de
-        // consolidación cuando ningún componente los use.
-        obsidian: { DEFAULT: '#0F172A', light: '#1E293B', dark: '#031427' },
-        luminous: { green: '#10B981', amber: '#F59E0B', blue: '#64748B' },
       },
       fontFamily: {
         sans: ['"Outfit Variable"', 'system-ui', '-apple-system', 'sans-serif'],

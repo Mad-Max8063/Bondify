@@ -33,7 +33,7 @@ export const createBusIcon = (bus: BusEntity, isSelected: boolean) => {
 
   const scaleClass = isSelected ? 'scale-[1.35] z-10' : 'scale-100 hover:scale-110';
   const badgeHtml = bus.passengers > 0 ? `
-    <div class="absolute -bottom-2 -left-1 bg-ink-900 text-zinc-100 text-[9px] font-bold font-mono px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 border border-white/10 shadow-fab">
+    <div class="absolute -bottom-2 -left-1 bg-ink-900 text-zinc-100 text-2xs font-bold font-mono px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 border border-white/10 shadow-fab">
       ${ICON_SVG.users(9, LED[300])} ${bus.passengers}
     </div>
   ` : '';
@@ -93,7 +93,7 @@ export const createBusIcon = (bus: BusEntity, isSelected: boolean) => {
       <div class="relative transition-all duration-300 ${scaleClass} ${vehicleOpacity} flex flex-col items-center justify-center filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.45)]">
         ${svgHtml}
         <!-- Pill: mini cartel LED con status dot -->
-        <div class="absolute -top-3.5 -right-3 bg-ink-950 border ${pillBorder} text-led-400 text-[10px] font-bold font-mono px-2 py-0.5 rounded-lg shadow-fab min-w-[20px] text-center tracking-wider flex items-center gap-1">
+        <div class="absolute -top-3.5 -right-3 bg-ink-950 border ${pillBorder} text-led-400 text-2xs font-bold font-mono px-2 py-0.5 rounded-lg shadow-fab min-w-[20px] text-center tracking-wider flex items-center gap-1">
           <span class="w-1.5 h-1.5 rounded-full shrink-0 ${dotAnimation}" style="background:${dotColor}"></span>${bus.line}
         </div>
         ${badgeHtml}
