@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { UserMode, Routine } from '../types';
-import { Settings, Zap, Users, X, Clock, Plus, Trash2, Shield, AlertTriangle, ExternalLink, Trophy, FileText } from 'lucide-react';
+import { Settings, Zap, Users, X, Clock, Plus, Trash2, Shield, AlertTriangle, ExternalLink, Trophy, FileText, FlaskConical } from 'lucide-react';
 import { deleteAllUserData } from '../utils/privacy';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useToast } from '../contexts/ToastContext';
 import { usuariosAPI } from '../services/api';
 
 interface ProfileSettingsProps {
@@ -17,10 +18,12 @@ interface ProfileSettingsProps {
 
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, routines = [], onModeChange, onUpdateRoutines, onClose, demoMode, onToggleDemoMode }) => {
     const { t, language, setLanguage } = useLanguage();
+    const { showToast } = useToast();
     const [newLine, setNewLine] = useState('');
     const [newTime, setNewTime] = useState('');
     const [newReturnTime, setNewReturnTime] = useState('');
     const [stats, setStats] = useState<{ puntos: number; nivel: number } | null>(null);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
 
     // Puntos y nivel reales del backend (otorgados server-side)
     useEffect(() => {
@@ -56,35 +59,48 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
         onUpdateRoutines(routines.filter(r => r.id !== id));
     };
 
+    const handleDeleteData = () => {
+        if (!confirmingDelete) {
+            setConfirmingDelete(true);
+            showToast(
+                language === 'es' ? 'Tocá de nuevo para confirmar el borrado' : 'Tap again to confirm deletion',
+                'info'
+            );
+            return;
+        }
+        deleteAllUserData();
+        window.location.reload();
+    };
+
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in overflow-y-auto">
-            <div className="glass-card border border-slate-700/50 w-full max-w-sm rounded-3xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative animate-in zoom-in-95 my-auto">
+        <div className="absolute inset-0 z-overlay flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+            <div className="glass-card w-full max-w-sm rounded-sheet p-6 relative animate-in zoom-in-95 my-auto">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-200 rounded-full hover:bg-white/10 transition-colors"
+                    className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-200 rounded-full hover:bg-white/10 transition-colors"
                 >
                     <X size={20} />
                 </button>
 
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-white/5 border border-white/10 p-3 rounded-xl shadow-inner">
-                        <Settings className="w-6 h-6 text-slate-300" />
+                    <div className="bg-white/5 border border-white/10 p-3 rounded-field">
+                        <Settings className="w-6 h-6 text-zinc-300" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-100">{t('profile_title')}</h2>
+                    <h2 className="text-xl font-bold text-zinc-100 tracking-tight">{t('profile_title')}</h2>
                 </div>
 
                 <div className="space-y-5">
                     {/* Puntos reales (server-side) */}
                     {stats && (
-                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-indigo-500/15 to-purple-600/15 border border-indigo-500/20">
-                            <div className="bg-luminous-amber/20 p-2.5 rounded-xl border border-luminous-amber/20">
-                                <Trophy className="w-5 h-5 text-luminous-amber" />
+                        <div className="flex items-center gap-3 p-4 rounded-card bg-led-400/[0.08] border border-led-500/20">
+                            <div className="bg-led-400/15 p-2.5 rounded-field border border-led-500/20">
+                                <Trophy className="w-5 h-5 text-led-400" />
                             </div>
                             <div>
-                                <p className="font-black text-slate-100 text-lg leading-tight">
-                                    {stats.puntos} {t('profile_points')}
+                                <p className="font-bold text-zinc-100 text-lg leading-tight font-mono">
+                                    {stats.puntos} <span className="font-sans text-base">{t('profile_points')}</span>
                                 </p>
-                                <p className="text-[11px] text-slate-400 font-bold">
+                                <p className="text-[11px] text-zinc-400 font-bold">
                                     {t('profile_level')} {stats.nivel}
                                 </p>
                             </div>
@@ -93,14 +109,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
 
                     {/* Language Selector */}
                     <div className="space-y-2 pb-2">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Idioma / Language</p>
-                        <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 shadow-inner w-full">
+                        <p className="text-2xs text-zinc-400 font-bold uppercase tracking-wider">Idioma / Language</p>
+                        <div className="flex bg-white/5 border border-white/10 rounded-field p-1 w-full">
                             <button
                                 onClick={() => setLanguage('es')}
                                 className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     language === 'es'
-                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                        ? 'bg-led-500 text-ink-950'
+                                        : 'text-zinc-400 hover:text-zinc-200'
                                 }`}
                             >
                                 Castellano (ARG)
@@ -109,8 +125,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                 onClick={() => setLanguage('en')}
                                 className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                     language === 'en'
-                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm'
-                                        : 'text-slate-400 hover:text-slate-200'
+                                        ? 'bg-led-500 text-ink-950'
+                                        : 'text-zinc-400 hover:text-zinc-200'
                                 }`}
                             >
                                 English (US)
@@ -120,11 +136,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
 
                     {/* Guest Mode Indicator */}
                     {currentMode === UserMode.GUEST && (
-                        <div className="bg-orange-500/10 border border-orange-500/20 p-3.5 rounded-xl flex items-center gap-3 mb-4">
-                            <Users className="w-5 h-5 text-orange-400" />
+                        <div className="bg-led-400/10 border border-led-500/20 p-3.5 rounded-field flex items-center gap-3 mb-4">
+                            <Users className="w-5 h-5 text-led-400" />
                             <div>
-                                <p className="font-bold text-orange-300 text-sm">{language === 'es' ? 'Modo Invitado' : 'Guest Mode'}</p>
-                                <p className="text-[10px] text-orange-400 leading-tight">
+                                <p className="font-bold text-led-300 text-sm">{language === 'es' ? 'Modo Invitado' : 'Guest Mode'}</p>
+                                <p className="text-[10px] text-led-400/80 leading-tight">
                                     {language === 'es' ? 'Estás en una sesión temporal. Los datos no se guardarán al salir.' : 'You are in a temporary guest session. Your data will not be saved.'}
                                 </p>
                             </div>
@@ -133,18 +149,18 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
 
                     {/* Mode Selection */}
                     <div className="space-y-3">
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t('profile_usage_mode')}</p>
+                        <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">{t('profile_usage_mode')}</p>
                         <button
                             onClick={() => onModeChange(UserMode.EFFICIENT)}
-                            className={`w-full p-4 rounded-2xl flex items-center justify-between border transition-all ${currentMode === UserMode.EFFICIENT ? 'border-slate-500 bg-white/10' : 'border-transparent bg-white/5 hover:bg-white/10'}`}
+                            className={`w-full p-4 rounded-card flex items-center justify-between border transition-all ${currentMode === UserMode.EFFICIENT ? 'border-white/20 bg-white/10' : 'border-transparent bg-white/5 hover:bg-white/10'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className="bg-white/5 p-2 rounded-lg border border-white/10 shadow-sm">
-                                    <Zap className="w-5 h-5 text-slate-300" />
+                                <div className="bg-white/5 p-2 rounded-lg border border-white/10">
+                                    <Zap className="w-5 h-5 text-zinc-300" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="font-bold text-slate-200">{t('onboarding_efficient_title')}</p>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="font-bold text-zinc-200">{t('onboarding_efficient_title')}</p>
+                                    <p className="text-xs text-zinc-400">
                                         {language === 'es' ? 'Solo datos del mapa y horarios' : 'Map details and schedule times only'}
                                     </p>
                                 </div>
@@ -153,15 +169,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
 
                         <button
                             onClick={() => onModeChange(UserMode.COMMUNITY)}
-                            className={`w-full p-4 rounded-2xl flex items-center justify-between border transition-all ${currentMode === UserMode.COMMUNITY ? 'border-indigo-500/50 bg-indigo-500/15' : 'border-transparent bg-white/5 hover:bg-white/10'}`}
+                            className={`w-full p-4 rounded-card flex items-center justify-between border transition-all ${currentMode === UserMode.COMMUNITY ? 'border-led-500/40 bg-led-400/10' : 'border-transparent bg-white/5 hover:bg-white/10'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className="bg-white/5 p-2 rounded-lg border border-indigo-500/20 shadow-sm">
-                                    <Users className="w-5 h-5 text-indigo-400" />
+                                <div className="bg-white/5 p-2 rounded-lg border border-led-500/20">
+                                    <Users className="w-5 h-5 text-led-400" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="font-bold text-slate-200">{t('onboarding_community_title')}</p>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="font-bold text-zinc-200">{t('onboarding_community_title')}</p>
+                                    <p className="text-xs text-zinc-400">
                                         {language === 'es' ? 'Reportar y validar incidentes en vivo' : 'Report and validate live incidents'}
                                     </p>
                                 </div>
@@ -170,38 +186,38 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     </div>
 
                     {/* Routines Section */}
-                    <div className="space-y-3 pt-4 border-t border-slate-800">
+                    <div className="space-y-3 pt-4 border-t border-white/5">
                         <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-indigo-400" />
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                            <Clock className="w-4 h-4 text-led-400" />
+                            <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                                 {language === 'es' ? 'Mis Rutinas (Ida y Vuelta)' : 'My Routines (Outbound / Return)'}
                             </p>
                         </div>
 
-                        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl space-y-3">
+                        <div className="bg-white/5 border border-white/5 p-3 rounded-card space-y-3">
                             {routines.map(routine => (
-                                <div key={routine.id} className="bg-obsidian-dark border border-slate-800 p-3 rounded-xl shadow-sm">
+                                <div key={routine.id} className="bg-ink-950 border border-white/5 p-3 rounded-field">
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <p className="font-bold text-slate-200">
-                                            {language === 'es' ? `Línea ${routine.line}` : `Line ${routine.line}`}
+                                        <p className="font-bold text-zinc-200">
+                                            {language === 'es' ? 'Línea' : 'Line'} <span className="font-mono text-led-400">{routine.line}</span>
                                         </p>
-                                        <button onClick={() => handleDeleteRoutine(routine.id)} className="text-slate-500 hover:text-red-400 transition-colors">
+                                        <button onClick={() => handleDeleteRoutine(routine.id)} className="text-zinc-500 hover:text-danger transition-colors">
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
                                     <div className="flex gap-4 text-xs">
                                         <div className="flex items-center gap-1">
-                                            <span className="font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded text-[10px]">
+                                            <span className="font-bold bg-led-400/15 text-led-300 px-1.5 py-0.5 rounded text-2xs">
                                                 {language === 'es' ? 'Ida' : 'Outbound'}
                                             </span>
-                                            <span className="text-slate-300 font-semibold">{routine.time} hs</span>
+                                            <span className="text-zinc-300 font-semibold font-mono">{routine.time} hs</span>
                                         </div>
                                         {routine.returnTime && (
                                             <div className="flex items-center gap-1">
-                                                <span className="font-bold bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded text-[10px]">
+                                                <span className="font-bold bg-zinc-700/30 text-zinc-300 px-1.5 py-0.5 rounded text-2xs">
                                                     {language === 'es' ? 'Vuelta' : 'Return'}
                                                 </span>
-                                                <span className="text-slate-300 font-semibold">{routine.returnTime} hs</span>
+                                                <span className="text-zinc-300 font-semibold font-mono">{routine.returnTime} hs</span>
                                             </div>
                                         )}
                                     </div>
@@ -214,11 +230,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                     placeholder={language === 'es' ? 'Línea (ej: 60)' : 'Line (e.g. 60)'}
                                     value={newLine}
                                     onChange={e => setNewLine(e.target.value)}
-                                    className="glass-input p-2.5 text-sm"
+                                    className="glass-input p-2.5 text-sm font-mono"
                                 />
                                 <div className="flex gap-2">
                                     <div className="flex-1">
-                                        <label className="text-[9px] text-slate-500 font-black uppercase tracking-wider ml-1">
+                                        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider ml-1">
                                             {language === 'es' ? 'Ida' : 'Outbound'}
                                         </label>
                                         <input
@@ -229,7 +245,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-[9px] text-slate-500 font-black uppercase tracking-wider ml-1">
+                                        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider ml-1">
                                             {language === 'es' ? 'Vuelta (Opcional)' : 'Return (Optional)'}
                                         </label>
                                         <input
@@ -243,7 +259,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                                         <button
                                             onClick={handleAddRoutine}
                                             disabled={!newLine || !newTime}
-                                            className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl disabled:opacity-50 h-[38px] w-[38px] flex items-center justify-center transition-all shadow-[0_4px_12px_rgba(99,102,241,0.2)] active:scale-95"
+                                            className="bg-led-500 hover:bg-led-400 text-ink-950 p-2.5 rounded-field disabled:opacity-50 h-[38px] w-[38px] flex items-center justify-center transition-all active:scale-98"
                                         >
                                             <Plus size={20} />
                                         </button>
@@ -254,100 +270,92 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentMode, r
                     </div>
 
                     {/* Privacy Section */}
-                    <div className="space-y-4 pt-4 border-t border-slate-800">
+                    <div className="space-y-2.5 pt-4 border-t border-white/5">
                         <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-emerald-400" />
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                            <Shield className="w-4 h-4 text-ok" />
+                            <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                                 {language === 'es' ? 'Privacidad y Datos' : 'Privacy & Data'}
                             </p>
                         </div>
 
-                        <div className="space-y-2.5">
-                            <a
-                                href="/privacy-policy.html"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full p-3 rounded-2xl flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Shield className="w-4 h-4 text-slate-400" />
-                                    <span className="text-sm font-bold text-slate-300">
-                                        {language === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}
-                                    </span>
-                                </div>
-                                <ExternalLink size={14} className="text-slate-500" />
-                            </a>
-
-                            <a
-                                href="/terminos.html"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full p-3 rounded-2xl flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all border border-white/5"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <FileText className="w-4 h-4 text-slate-400" />
-                                    <span className="text-sm font-bold text-slate-300">
-                                        {language === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions'}
-                                    </span>
-                                </div>
-                                <ExternalLink size={14} className="text-slate-500" />
-                            </a>
-
-                            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-3 shadow-inner">
-                                <div className="flex items-center gap-2 text-red-400 font-bold">
-                                    <AlertTriangle size={16} />
-                                    <p className="text-[10px] uppercase tracking-widest font-black">
-                                        {language === 'es' ? 'Zona de Riesgo' : 'Danger Zone'}
-                                    </p>
-                                </div>
-                                <p className="text-[10px] text-red-400/90 leading-relaxed font-medium">
-                                    {language === 'es' 
-                                        ? 'Esto eliminará permanentemente tus favoritos, rutinas y ID anónimo de este dispositivo de forma definitiva.'
-                                        : 'This will permanently delete your saved favorites, routine paths, and anonymous user ID from this browser.'}
-                                </p>
-                                <button
-                                    onClick={() => {
-                                        const confirmText = language === 'es' 
-                                            ? '¿Estás seguro de que querés borrar todos tus datos locales? Esta acción no se puede deshacer.'
-                                            : 'Are you sure you want to delete all local user data? This action is irreversible.';
-                                        if (confirm(confirmText)) {
-                                            deleteAllUserData();
-                                            window.location.reload();
-                                        }
-                                    }}
-                                    className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-[0_4px_12px_rgba(239,68,68,0.25)] active:scale-95"
-                                >
-                                    {language === 'es' ? 'Borrar mis datos locales' : 'Clear my local data'}
-                                </button>
+                        <a
+                            href="/privacy-policy.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full p-3 rounded-card flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Shield className="w-4 h-4 text-zinc-400" />
+                                <span className="text-sm font-bold text-zinc-300">
+                                    {language === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}
+                                </span>
                             </div>
+                            <ExternalLink size={14} className="text-zinc-500" />
+                        </a>
+
+                        <a
+                            href="/terminos.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full p-3 rounded-card flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+                        >
+                            <div className="flex items-center gap-3">
+                                <FileText className="w-4 h-4 text-zinc-400" />
+                                <span className="text-sm font-bold text-zinc-300">
+                                    {language === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions'}
+                                </span>
+                            </div>
+                            <ExternalLink size={14} className="text-zinc-500" />
+                        </a>
+
+                        <div className="p-4 rounded-card bg-danger/10 border border-danger/20 space-y-3">
+                            <div className="flex items-center gap-2 text-danger font-bold">
+                                <AlertTriangle size={16} />
+                                <p className="text-[10px] uppercase tracking-widest font-bold">
+                                    {language === 'es' ? 'Zona de Riesgo' : 'Danger Zone'}
+                                </p>
+                            </div>
+                            <p className="text-[10px] text-danger/90 leading-relaxed font-medium">
+                                {language === 'es'
+                                    ? 'Esto eliminará permanentemente tus favoritos, rutinas y ID anónimo de este dispositivo de forma definitiva.'
+                                    : 'This will permanently delete your saved favorites, routine paths, and anonymous user ID from this browser.'}
+                            </p>
+                            <button
+                                onClick={handleDeleteData}
+                                className="w-full py-2.5 bg-danger-dim hover:brightness-110 text-white rounded-field text-xs font-bold transition-all active:scale-98"
+                            >
+                                {confirmingDelete
+                                    ? (language === 'es' ? 'Confirmar borrado' : 'Confirm deletion')
+                                    : (language === 'es' ? 'Borrar mis datos locales' : 'Clear my local data')}
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Modo Demo: datos simulados, claramente rotulados en el mapa */}
                 {onToggleDemoMode && (
-                    <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-2xl mt-4 border border-white/5 shadow-inner">
+                    <div className="flex items-center justify-between p-3.5 bg-white/5 rounded-card mt-4 border border-white/5">
                         <div className="flex items-center gap-2">
-                            <span className="text-xl">🧪</span>
+                            <FlaskConical className="w-5 h-5 text-led-400" />
                             <div>
-                                <p className="font-bold text-slate-200 text-sm">
+                                <p className="font-bold text-zinc-200 text-sm">
                                     {language === 'es' ? 'Modo Demo' : 'Demo Mode'}
                                 </p>
-                                <p className="text-[10px] text-slate-400">
+                                <p className="text-[10px] text-zinc-400">
                                     {language === 'es' ? 'Datos simulados para conocer la app' : 'Simulated data to explore the app'}
                                 </p>
                             </div>
                         </div>
                         <button
                             onClick={onToggleDemoMode}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${demoMode ? 'bg-luminous-amber' : 'bg-slate-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${demoMode ? 'bg-led-500' : 'bg-ink-700'}`}
                         >
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${demoMode ? 'left-7' : 'left-1'}`} />
                         </button>
                     </div>
                 )}
 
-                <p className="mt-8 text-center text-[10px] text-slate-500 font-medium">
+                <p className="mt-8 text-center text-[10px] text-zinc-500 font-medium">
                     {language === 'es' ? 'Podés cambiar esto cuando quieras.' : 'You can change this at any time.'}
                 </p>
             </div>
