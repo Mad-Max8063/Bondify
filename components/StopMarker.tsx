@@ -2,24 +2,24 @@ import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { BusStop } from '../types';
+import { LED } from '../config/designTokens';
+import { ICON_SVG } from '../utils/iconSvg';
 
 interface StopMarkerProps {
     stop: BusStop;
 }
 
-// Custom Bus Stop Icon
+// Chip de parada: ink + ícono de bondi ámbar
 const stopIcon = L.divIcon({
     className: 'bus-stop-marker',
     html: `
-        <div class="relative flex items-center justify-center w-8 h-8 rounded-full border border-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.25)]" style="
-          background: rgba(30, 41, 59, 0.7);
+        <div class="relative flex items-center justify-center w-8 h-8 rounded-full border border-white/10" style="
+          background: rgba(16, 16, 19, 0.8);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
         ">
-            <!-- Glowing blue core animation -->
-            <div class="w-3.5 h-3.5 bg-indigo-500 rounded-full animate-ping absolute opacity-30"></div>
-            <!-- Stop Icon -->
-            <span class="text-xs text-indigo-300 relative z-10">🚏</span>
+            <div class="w-3.5 h-3.5 rounded-full animate-ping absolute" style="background: ${LED[400]}; opacity: 0.2;"></div>
+            <span class="relative z-10 flex items-center justify-center">${ICON_SVG.busFront(14, LED[300])}</span>
         </div>
     `,
     iconSize: [32, 32],
@@ -31,8 +31,17 @@ export const StopMarker: React.FC<StopMarkerProps> = ({ stop }) => {
         <Marker position={[stop.lat, stop.lng]} icon={stopIcon}>
             <Popup className="bus-stop-popup">
                 <div className="p-1">
-                    <h4 className="font-bold text-slate-800 text-sm">{stop.name}</h4>
-                    <p className="text-xs text-slate-500 mt-1">Líneas: {stop.lines.join(', ')}</p>
+                    <h4 className="font-bold text-zinc-100 text-sm">{stop.name}</h4>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                        {stop.lines.map(line => (
+                            <span
+                                key={line}
+                                className="font-mono text-2xs font-bold text-led-300 bg-ink-950 border border-white/10 rounded px-1.5 py-0.5"
+                            >
+                                {line}
+                            </span>
+                        ))}
+                    </div>
                 </div>
             </Popup>
         </Marker>
