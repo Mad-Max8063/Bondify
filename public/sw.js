@@ -1,5 +1,5 @@
-// Bump de versión: invalida caches viejos que guardaban assets del CDN
-const CACHE_NAME = 'bondify-v2';
+// Bump de versión: invalida caches viejos (rediseño Ámbar LED)
+const CACHE_NAME = 'bondify-v3';
 
 // Assets to cache for offline functionality
 const STATIC_ASSETS = [
