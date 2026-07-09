@@ -46,9 +46,10 @@ async function analizarIncidente(textoReporte) {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    // Flash: rápido, barato y soporta JSON estructurado
+    // Flash-lite: alcanza de sobra para clasificar y su cuota gratuita diaria
+    // es mucho más alta que la de flash (y va por modelo, cupo aparte).
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-flash-lite",
       contents: `Eres un asistente de tránsito experto en Buenos Aires (AMBA).
       Analiza el siguiente reporte enviado por un pasajero de colectivo: "${textoReporte}".
       Tu tarea es clasificar la situación, extraer información útil y dar un consejo de seguridad breve.`,
