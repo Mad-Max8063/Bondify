@@ -56,7 +56,8 @@ async function analizarIncidente(textoReporte) {
       config: {
         systemInstruction: `Categorías posibles: 'DEMORA', 'ACCIDENTE', 'INSEGURIDAD', 'PIQUETE', 'DATO_IRRELEVANTE'.
         La gravedad es un número entre 0 y 1 (0 = sin impacto, 1 = peligro serio); es_peligroso es true si la gravedad supera 0.7.
-        El consejo debe ser corto, útil y con "modismos" argentinos sutiles si cabe.
+        El consejo debe ser corto, útil y en tono claro y respetuoso, en español de Argentina (voseo: "evitá", "tené en cuenta").
+        Nada de lunfardo, muletillas ("che", "ojo al piojo") ni chistes: informás una situación de tránsito que puede ser seria.
         Responde ÚNICAMENTE con este formato JSON.`,
         responseMimeType: "application/json",
         responseSchema: {
