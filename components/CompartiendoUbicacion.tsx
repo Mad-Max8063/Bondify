@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigation, StopCircle, Users } from 'lucide-react';
+import { Navigation, StopCircle, Users, Hourglass } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface CompartiendoUbicacionProps {
@@ -8,6 +8,8 @@ interface CompartiendoUbicacionProps {
   onDetener: () => void;
   usuariosViendote: number;
   onPanic?: () => void;
+  /** false hasta que el gate de movimiento sostenido confirma que está arriba del bondi */
+  hasMoved?: boolean;
 }
 
 export const CompartiendoUbicacion: React.FC<CompartiendoUbicacionProps> = ({
@@ -15,7 +17,8 @@ export const CompartiendoUbicacion: React.FC<CompartiendoUbicacionProps> = ({
   ramal,
   onDetener,
   usuariosViendote,
-  onPanic
+  onPanic,
+  hasMoved = true
 }) => {
   const [segundos, setSegundos] = useState(0);
   const { t } = useLanguage();
@@ -36,21 +39,31 @@ export const CompartiendoUbicacion: React.FC<CompartiendoUbicacionProps> = ({
 
   return (
     <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-banner animate-in slide-in-from-top w-[calc(100%-2rem)] max-w-sm">
-      <div className="glass-card rounded-sheet p-4 border-ok/30">
+      <div className={`glass-card rounded-sheet p-4 ${hasMoved ? 'border-ok/30' : 'border-led-500/30'}`}>
         <div className="flex items-center justify-between gap-4">
           {/* Indicador animado */}
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
-              <div className="w-12 h-12 bg-ok/15 rounded-full flex items-center justify-center border border-ok/30">
-                <Navigation className="w-6 h-6 text-ok" />
-              </div>
-              <div className="absolute inset-0 w-12 h-12 bg-ok rounded-full animate-ping opacity-20" />
+              {hasMoved ? (
+                <>
+                  <div className="w-12 h-12 bg-ok/15 rounded-full flex items-center justify-center border border-ok/30">
+                    <Navigation className="w-6 h-6 text-ok" />
+                  </div>
+                  <div className="absolute inset-0 w-12 h-12 bg-ok rounded-full animate-ping opacity-20" />
+                </>
+              ) : (
+                <div className="w-12 h-12 bg-led-400/15 rounded-full flex items-center justify-center border border-led-500/30">
+                  <Hourglass className="w-6 h-6 text-led-400 animate-pulse" />
+                </div>
+              )}
             </div>
 
             <div className="text-zinc-100">
-              <p className="font-bold text-sm md:text-base leading-tight">{t('geo_sharing_active')}</p>
+              <p className="font-bold text-sm md:text-base leading-tight">
+                {hasMoved ? t('geo_sharing_active') : t('geo_waiting_movement')}
+              </p>
               <div className="flex items-center gap-2 text-xs text-zinc-400 mt-0.5">
-                <div className="w-2 h-2 bg-ok rounded-full animate-pulse-slow" />
+                <div className={`w-2 h-2 rounded-full ${hasMoved ? 'bg-ok animate-pulse-slow' : 'bg-led-400 animate-pulse'}`} />
                 <span>Línea <span className="font-mono text-led-400">{linea}</span> {ramal && `(${ramal})`}</span>
               </div>
             </div>
@@ -58,10 +71,12 @@ export const CompartiendoUbicacion: React.FC<CompartiendoUbicacionProps> = ({
 
           {/* Stats */}
           <div className="flex flex-col items-end gap-1 shrink-0">
-            <div className="flex items-center gap-1 text-ok text-2xs font-bold bg-ok/15 px-2 py-0.5 rounded-full uppercase tracking-wider">
-              <Users className="w-2.5 h-2.5" />
-              <span>{t('geo_sharing_verified')}</span>
-            </div>
+            {hasMoved && (
+              <div className="flex items-center gap-1 text-ok text-2xs font-bold bg-ok/15 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <Users className="w-2.5 h-2.5" />
+                <span>{t('geo_sharing_verified')}</span>
+              </div>
+            )}
             <span className="text-zinc-400 text-xs font-mono font-bold">{formatearTiempo(segundos)}</span>
           </div>
         </div>

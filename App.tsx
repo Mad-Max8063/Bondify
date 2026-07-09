@@ -144,6 +144,7 @@ const App: React.FC = () => {
         ramalActual,
         compartiendoUbicacion,
         userLocation,
+        hasMoved,
         ubicacionesRecientes,
         iniciarCompartirUbicacion,
         detenerCompartirUbicacion
@@ -322,6 +323,7 @@ const App: React.FC = () => {
                 <CompartiendoUbicacion
                     linea={lineaActual}
                     ramal={ramalActual}
+                    hasMoved={hasMoved}
                     onDetener={() => {
                         detenerCompartirUbicacion();
                         rotateTripId();

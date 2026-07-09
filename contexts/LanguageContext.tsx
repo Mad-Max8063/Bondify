@@ -124,6 +124,7 @@ type TranslationKeys =
   | 'install_android_step3_desc'
   | 'install_benefits'
   | 'geo_sharing_active'
+  | 'geo_waiting_movement'
   | 'geo_sharing_desc'
   | 'geo_sharing_get_off'
   | 'geo_sharing_panic'
@@ -292,6 +293,7 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     install_android_step3_desc: 'Bondify estará en tu pantalla de inicio',
     install_benefits: '✨ Sin Play Store ni App Store • Acceso instantáneo • Funciona offline',
     geo_sharing_active: 'Compartiendo ubicación',
+    geo_waiting_movement: 'Esperando que arranque el bondi…',
     geo_sharing_desc: '📍 Tu ubicación se comparte con un margen de 50m para tu privacidad.',
     geo_sharing_get_off: 'Bajarme',
     geo_sharing_panic: '🚨 PÁNICO',
@@ -459,6 +461,7 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     install_android_step3_desc: 'Bondify will be on your home screen',
     install_benefits: '✨ No Play Store or App Store • Instant access • Works offline',
     geo_sharing_active: 'Sharing location',
+    geo_waiting_movement: 'Waiting for the bus to start moving…',
     geo_sharing_desc: '📍 Your location is shared with a 50m margin for your privacy.',
     geo_sharing_get_off: 'Get off',
     geo_sharing_panic: '🚨 PANIC',

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 
 import { UserRole, UserProfile } from '../types';
 import { Geolocation } from '@capacitor/geolocation';
 import { colectivosAPI, estadoColectivoAPI } from '../services/api';
-import { rotateTripId, registerPanicCallback } from '../utils/privacy';
+import { rotateTripId, registerPanicCallback, calculateDistance } from '../utils/privacy';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useToast } from '../contexts/ToastContext';
 
@@ -25,6 +25,16 @@ interface UseGeolocationParams {
 // Intervalo de pings GPS. A 10s, un viajero-hora son ~360 writes de Firestore.
 const PING_INTERVAL_MS = 10000;
 
+// Gate de movimiento: recién se comparte con la comunidad cuando hay evidencia
+// de estar arriba del bondi, no caminando hacia la parada.
+// 2.5 m/s (9 km/h) descarta caminata; sostenido en 2 fixes (~20s) descarta picos de GPS.
+const SPEED_THRESHOLD_MS = 2.5;
+const SUSTAINED_FIXES = 2;
+// Fallback para GPS que no reportan velocidad (coords.speed = null):
+// ≥150 m recorridos en ~60s (6 fixes) equivale a un promedio ≥2.5 m/s.
+const FALLBACK_DISTANCE_M = 150;
+const FALLBACK_WINDOW_FIXES = 6;
+
 export const useGeolocation = ({
     userId,
     profile,
@@ -45,6 +55,9 @@ export const useGeolocation = ({
     const [ubicacionesRecientes, setUbicacionesRecientes] = useState<Location[]>([]);
 
     const gpsIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    // Estado del gate de movimiento (refs: el setInterval no ve estado fresco)
+    const movingFixesRef = useRef(0);
+    const gateFixesRef = useRef<Location[]>([]);
     const stateRef = useRef({
         lineaActual,
         ramalActual,
@@ -101,6 +114,8 @@ export const useGeolocation = ({
         setUbicacionesRecientes([]);
         setUserLocation(null);
         setHasMoved(false);
+        movingFixesRef.current = 0;
+        gateFixesRef.current = [];
 
         // Rotar ID de viaje al terminar por privacidad
         rotateTripId();
@@ -147,13 +162,34 @@ export const useGeolocation = ({
                 const { latitude, longitude } = position.coords;
                 setUserLocation({ lat: latitude, lng: longitude });
 
-                // Detectar movimiento (más de 5km/h = 1.4m/s) para confirmar que ya está viajando
+                // Gate de movimiento sostenido: confirma que el usuario está arriba
+                // del bondi antes de publicar su posición a la comunidad.
+                // OJO: es un latch de ida — una vez activado NO se vuelve a evaluar,
+                // así las frenadas (semáforos, paradas) nunca cortan el compartir.
                 const speed = position.coords.speed || 0;
                 let activeHasMoved = stateRef.current.hasMoved;
-                if (!activeHasMoved && speed > 1.4) {
-                    console.log('🚀 Movimiento detectado! Iniciando sincronización comunitaria.');
-                    setHasMoved(true);
-                    activeHasMoved = true;
+                if (!activeHasMoved) {
+                    // Camino principal: velocidad del GPS sostenida por encima del umbral
+                    if (speed > SPEED_THRESHOLD_MS) {
+                        movingFixesRef.current += 1;
+                    } else {
+                        movingFixesRef.current = 0;
+                    }
+
+                    // Fallback: desplazamiento acumulado, para GPS sin coords.speed
+                    gateFixesRef.current = [...gateFixesRef.current.slice(-(FALLBACK_WINDOW_FIXES)), { lat: latitude, lng: longitude }];
+                    let sustainedByDistance = false;
+                    if (gateFixesRef.current.length > FALLBACK_WINDOW_FIXES) {
+                        const oldest = gateFixesRef.current[0];
+                        const recorrido = calculateDistance(oldest.lat, oldest.lng, latitude, longitude);
+                        sustainedByDistance = recorrido >= FALLBACK_DISTANCE_M;
+                    }
+
+                    if (movingFixesRef.current >= SUSTAINED_FIXES || sustainedByDistance) {
+                        console.log('🚀 Movimiento sostenido detectado! Iniciando sincronización comunitaria.');
+                        setHasMoved(true);
+                        activeHasMoved = true;
+                    }
                 }
 
                 // Agregar a ubicaciones recientes
