@@ -55,6 +55,7 @@ async function analizarIncidente(textoReporte) {
       Tu tarea es clasificar la situación, extraer información útil y dar un consejo de seguridad breve.`,
       config: {
         systemInstruction: `Categorías posibles: 'DEMORA', 'ACCIDENTE', 'INSEGURIDAD', 'PIQUETE', 'DATO_IRRELEVANTE'.
+        La gravedad es un número entre 0 y 1 (0 = sin impacto, 1 = peligro serio); es_peligroso es true si la gravedad supera 0.7.
         El consejo debe ser corto, útil y con "modismos" argentinos sutiles si cabe.
         Responde ÚNICAMENTE con este formato JSON.`,
         responseMimeType: "application/json",
