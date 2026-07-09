@@ -23,6 +23,5 @@ services:
       # Pegar en el dashboard: key de Google AI Studio (aistudio.google.com/apikey).
       - key: GEMINI_API_KEY
         sync: false
-      # Actualizar con la URL final del servicio una vez creado.
       - key: CORS_ORIGINS
-        value: https://bondify.onrender.com
+        value: https://bondify-evdj.onrender.com
