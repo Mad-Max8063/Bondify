@@ -72,7 +72,8 @@ async function analizarIncidente(textoReporte) {
       }
     });
 
-    return response.text();
+    // En @google/genai response.text es propiedad (getter), no método
+    return response.text;
   } catch (error) {
     console.error("Error en Gemini Service:", error);
     // Devuelve un JSON fallback por si falla la API
