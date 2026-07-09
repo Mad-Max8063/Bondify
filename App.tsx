@@ -15,7 +15,7 @@ import { DesviacionAlert } from './components/DesviacionAlert';
 import { ConfirmarDesvioAlert } from './components/ConfirmarDesvioAlert';
 import { DesvioNotificacion } from './components/DesvioNotificacion';
 import { InstallGuide } from './components/InstallGuide';
-import { Map, Power, User, Star, Clock } from 'lucide-react';
+import { Map, Power, User, Star, Clock, Smartphone, X } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
 import { useToast } from './contexts/ToastContext';
 import { usuariosAPI, colectivosAPI } from './services/api';
@@ -269,7 +269,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="h-dynamic w-full flex flex-col bg-obsidian text-slate-100 font-sans overflow-hidden">
+        <div className="h-dynamic w-full flex flex-col bg-ink-950 text-zinc-100 font-sans overflow-hidden">
 
             {/* Smart Nudge Popup */}
             {nudgeRoutine && (
@@ -385,19 +385,19 @@ const App: React.FC = () => {
 
             {/* Banner de instalación PWA */}
             {showInstallBanner && (
-                <div className="fixed top-4 left-4 right-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-xl z-50 animate-in slide-in-from-top">
+                <div className="fixed top-4 left-4 right-4 glass-card border-led-500/30 text-zinc-100 p-4 rounded-card z-banner animate-in slide-in-from-top">
                     <div className="flex items-center gap-3">
-                        <span className="text-2xl">📱</span>
+                        <Smartphone className="w-6 h-6 text-led-400 shrink-0" />
                         <div className="flex-1">
                             <p className="font-bold">{t('install_banner_title')}</p>
-                            <p className="text-xs text-indigo-100">{t('install_banner_desc')}</p>
+                            <p className="text-xs text-zinc-400">{t('install_banner_desc')}</p>
                         </div>
                         <button
                             onClick={() => {
                                 setShowInstallBanner(false);
                                 setShowInstallGuide(true);
                             }}
-                            className="bg-white text-indigo-600 px-3 py-1 rounded-lg text-sm font-bold"
+                            className="bg-led-500 text-ink-950 px-3 py-1.5 rounded-field text-sm font-bold active:scale-98 transition-transform"
                         >
                             {t('install_banner_cta')}
                         </button>
@@ -406,9 +406,10 @@ const App: React.FC = () => {
                                 setShowInstallBanner(false);
                                 localStorage.setItem('bondify_install_dismissed', 'true');
                             }}
-                            className="text-indigo-200 hover:text-white text-xl"
+                            className="text-zinc-500 hover:text-zinc-200 p-1"
+                            aria-label="Cerrar"
                         >
-                            ×
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -444,7 +445,7 @@ const App: React.FC = () => {
             )}
 
             {/* Bottom Navigation */}
-            <div className="glass-nav pb-safe pt-3 px-4 z-40 rounded-t-[2rem] border-t-0 shadow-[0_-10px_35px_rgba(0,0,0,0.5)]">
+            <div className="glass-nav pb-safe pt-2 px-4 z-nav rounded-t-sheet border-t-0">
                 <div className="flex items-center justify-around h-16">
 
                     {/* Favoritos Button */}
@@ -454,36 +455,34 @@ const App: React.FC = () => {
                             setShowProfileSettings(false);
                             setShowHistorial(false);
                         }}
-                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${showFavoritos ? 'text-luminous-amber scale-105' : 'text-slate-400 hover:text-slate-200'}`}
+                        className={`relative flex flex-col items-center gap-1 pt-2 transition-colors duration-300 ${showFavoritos ? 'text-led-400' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
-                        <div className={`p-1.5 rounded-xl transition-colors ${showFavoritos ? 'bg-luminous-amber/20 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : ''}`}>
-                            <Star className="w-5 h-5" />
-                        </div>
-                        <span className="text-[10px] font-bold">{t('nav_favorites')}</span>
+                        <span className={`absolute top-0 h-0.5 w-6 rounded-full bg-led-400 transition-opacity duration-300 ${showFavoritos ? 'opacity-100' : 'opacity-0'}`} />
+                        <Star className="w-5 h-5" />
+                        <span className="text-2xs font-bold">{t('nav_favorites')}</span>
                     </button>
 
-                    {/* Toggle Role Button */}
+                    {/* Toggle Role Button (viajando = estado activo, verde semántico) */}
                     <button
                         onClick={toggleRole}
-                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${profile.role === UserRole.TRAVELER ? 'text-luminous-green scale-105' : 'text-slate-400 hover:text-slate-200'}`}
+                        className={`relative flex flex-col items-center gap-1 pt-2 transition-colors duration-300 ${profile.role === UserRole.TRAVELER ? 'text-ok' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
-                        <div className={`p-1.5 rounded-xl transition-colors ${profile.role === UserRole.TRAVELER ? 'bg-luminous-green/20 shadow-[0_0_12px_rgba(16,185,129,0.2)]' : ''}`}>
-                            <Power className="w-5 h-5" />
-                        </div>
-                        <span className="text-[10px] font-bold">
+                        <span className={`absolute top-0 h-0.5 w-6 rounded-full bg-ok transition-opacity duration-300 ${profile.role === UserRole.TRAVELER ? 'opacity-100' : 'opacity-0'}`} />
+                        <Power className="w-5 h-5" />
+                        <span className="text-2xs font-bold">
                             {profile.role === UserRole.TRAVELER ? t('nav_traveling') : t('nav_waiting')}
                         </span>
                     </button>
 
                     {/* Main Map Button (Center) */}
-                    <div className="relative -top-7">
+                    <div className="relative -top-6">
                         <button
                             onClick={() => {
                                 setShowProfileSettings(false);
                                 setShowFavoritos(false);
                                 setShowHistorial(false);
                             }}
-                            className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.6)] active:scale-95 transition-all border-[3px] border-obsidian-light"
+                            className="w-14 h-14 bg-led-500 hover:bg-led-400 rounded-card flex items-center justify-center text-ink-950 shadow-fab active:scale-98 transition-all border-4 border-ink-950"
                         >
                             <Map className="w-6 h-6" />
                         </button>
@@ -496,12 +495,11 @@ const App: React.FC = () => {
                             setShowProfileSettings(false);
                             setShowFavoritos(false);
                         }}
-                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${showHistorial ? 'text-purple-400 scale-105' : 'text-slate-400 hover:text-slate-200'}`}
+                        className={`relative flex flex-col items-center gap-1 pt-2 transition-colors duration-300 ${showHistorial ? 'text-led-400' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
-                        <div className={`p-1.5 rounded-xl transition-colors ${showHistorial ? 'bg-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.2)]' : ''}`}>
-                            <Clock className="w-5 h-5" />
-                        </div>
-                        <span className="text-[10px] font-bold">{t('nav_history')}</span>
+                        <span className={`absolute top-0 h-0.5 w-6 rounded-full bg-led-400 transition-opacity duration-300 ${showHistorial ? 'opacity-100' : 'opacity-0'}`} />
+                        <Clock className="w-5 h-5" />
+                        <span className="text-2xs font-bold">{t('nav_history')}</span>
                     </button>
 
                     {/* Profile Button */}
@@ -511,12 +509,11 @@ const App: React.FC = () => {
                             setShowFavoritos(false);
                             setShowHistorial(false);
                         }}
-                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${showProfileSettings ? 'text-blue-400 scale-105' : 'text-slate-400 hover:text-slate-200'}`}
+                        className={`relative flex flex-col items-center gap-1 pt-2 transition-colors duration-300 ${showProfileSettings ? 'text-led-400' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
-                        <div className={`p-1.5 rounded-xl transition-colors ${showProfileSettings ? 'bg-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.2)]' : ''}`}>
-                            <User className="w-5 h-5" />
-                        </div>
-                        <span className="text-[10px] font-bold">{t('nav_profile')}</span>
+                        <span className={`absolute top-0 h-0.5 w-6 rounded-full bg-led-400 transition-opacity duration-300 ${showProfileSettings ? 'opacity-100' : 'opacity-0'}`} />
+                        <User className="w-5 h-5" />
+                        <span className="text-2xs font-bold">{t('nav_profile')}</span>
                     </button>
                 </div>
             </div>

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { X, ThumbsUp } from 'lucide-react';
+import { X, TriangleAlert, Users, Armchair, Clock, Zap, TrafficCone, ShieldAlert, Ghost, CornerUpRight, ChevronRight, LoaderCircle, Info, Send, ArrowLeft } from 'lucide-react';
 import { reportesAPI } from '../services/api';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useToast } from '../contexts/ToastContext';
 import { LINEAS_BASE } from '../constants';
 import { Geolocation } from '@capacitor/geolocation';
+import { Button } from './Button';
 
 interface WazeReportButtonProps {
   onReportCreated?: () => void;
@@ -19,64 +20,65 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
   const [showMenu, setShowMenu] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [linea, setLinea] = useState('');
+  const [lineaError, setLineaError] = useState(false);
   const [comentario, setComentario] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportTypes = [
     {
       id: 'lleno',
-      icon: '🚌',
+      Icon: Users,
+      iconColor: 'text-danger',
       label: language === 'es' ? 'Colectivo lleno' : 'Full bus',
-      color: 'bg-red-500',
       description: language === 'es' ? 'No hay lugar' : 'No seats/room left'
     },
     {
       id: 'vacio',
-      icon: '✅',
+      Icon: Armchair,
+      iconColor: 'text-ok',
       label: language === 'es' ? 'Colectivo vacío' : 'Empty bus',
-      color: 'bg-green-500',
       description: language === 'es' ? 'Hay mucho lugar' : 'Plenty of seats/room'
     },
     {
       id: 'demora',
-      icon: '⏰',
+      Icon: Clock,
+      iconColor: 'text-led-400',
       label: language === 'es' ? 'Gran demora' : 'Heavy delay',
-      color: 'bg-orange-500',
       description: language === 'es' ? 'Mucho tráfico/espera' : 'Heavy traffic/long wait'
     },
     {
       id: 'accidente',
-      icon: '💥',
+      Icon: Zap,
+      iconColor: 'text-danger',
       label: language === 'es' ? 'Accidente' : 'Accident',
-      color: 'bg-red-600',
       description: language === 'es' ? 'Choque o accidente' : 'Collision or crash'
     },
     {
       id: 'piquete',
-      icon: '🚧',
+      Icon: TrafficCone,
+      iconColor: 'text-led-400',
       label: language === 'es' ? 'Corte/Piquete' : 'Protest / Roadblock',
-      color: 'bg-yellow-600',
       description: language === 'es' ? 'Calle cortada' : 'Street blocked'
     },
     {
       id: 'inseguridad',
-      icon: '⚠️',
+      Icon: ShieldAlert,
+      iconColor: 'text-danger',
       label: language === 'es' ? 'Zona insegura' : 'Unsafe area',
-      color: 'bg-purple-600',
       description: language === 'es' ? 'Ten precaución' : 'Use caution'
     },
     {
       id: 'fantasma',
-      icon: '👻',
+      Icon: Ghost,
+      iconColor: 'text-zinc-400',
       label: language === 'es' ? 'Bondi fantasma' : 'Ghost bus',
-      color: 'bg-gray-600',
       description: language === 'es' ? 'No llegó el colectivo' : 'Bus did not arrive'
     },
     {
       id: 'desvio',
-      icon: '↪️',
+      Icon: CornerUpRight,
+      iconColor: 'text-led-400',
       label: language === 'es' ? 'Desvío' : 'Route Detour',
-      color: 'bg-blue-500',
       description: language === 'es' ? 'Cambió de ruta' : 'Detoured route'
     }
   ];
@@ -87,6 +89,7 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
       return;
     }
     setLinea(lineaActual || '');
+    setLineaError(false);
     setShowMenu(true);
   };
 
@@ -112,7 +115,7 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
 
     const lineaLimpia = linea.trim();
     if (!lineaLimpia) {
-      showToast(t('report_need_line'), 'error');
+      setLineaError(true);
       return;
     }
 
@@ -165,35 +168,36 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
     return (
       <button
         onClick={handleOpen}
-        className="fixed top-20 right-4 w-14 h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-full shadow-[0_4px_20px_rgba(249,115,22,0.4)] flex items-center justify-center text-white text-2xl hover:scale-110 active:scale-95 transition-all z-[9998] animate-pulse border border-white/20"
+        aria-label={language === 'es' ? 'Reportar incidente' : 'Report incident'}
+        className="fixed top-20 right-4 w-14 h-14 bg-ink-900/90 backdrop-blur-xl rounded-card shadow-fab flex items-center justify-center text-led-400 hover:text-led-300 hover:scale-105 active:scale-98 transition-all z-chrome border border-led-500/40"
       >
-        ⚠️
+        <TriangleAlert className="w-6 h-6" />
       </button>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-4 animate-in fade-in">
-      <div className="glass-card border border-slate-700/50 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto pb-safe animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-overlay flex items-end sm:items-center justify-center p-4 animate-in fade-in">
+      <div className="glass-card rounded-t-sheet sm:rounded-sheet w-full max-w-lg max-h-[85vh] overflow-y-auto pb-safe animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 scrollbar-thin">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-orange-500/80 to-red-500/80 backdrop-blur-xl p-6 text-white rounded-t-3xl border-b border-white/10">
+        <div className="sticky top-0 bg-ink-900/95 backdrop-blur-xl p-6 rounded-t-sheet border-b border-white/10 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-white/20">
-                ⚠️
+              <div className="w-12 h-12 bg-led-400/15 rounded-field flex items-center justify-center border border-led-500/30">
+                <TriangleAlert className="w-6 h-6 text-led-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-2xl font-bold text-zinc-100 tracking-tight">
                   {language === 'es' ? 'Reportar Incidente' : 'Report Incident'}
                 </h2>
-                <p className="text-sm text-orange-100/90 font-medium">
+                <p className="text-sm text-zinc-400 font-medium">
                   {language === 'es' ? 'Ayudá a la comunidad en vivo' : 'Help the community live'}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowMenu(false)}
-              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center border border-white/10 transition-colors"
+              className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 text-zinc-400 hover:text-zinc-200 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -202,26 +206,24 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
 
         {/* Report Types */}
         {!selectedType ? (
-          <div className="p-6 space-y-3">
-            <p className="text-slate-400 text-sm font-semibold mb-4 uppercase tracking-wider">
+          <div className="p-6 space-y-2">
+            <p className="text-zinc-400 text-2xs font-bold mb-4 uppercase tracking-wider">
               {language === 'es' ? '¿Qué está pasando ahora?' : 'What is happening now?'}
             </p>
             {reportTypes.map((type) => (
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className="w-full p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-orange-500/50 hover:bg-white/10 transition-all flex items-center gap-4 group"
+                className="w-full p-3.5 rounded-card bg-white/[0.03] border border-white/5 hover:border-led-500/40 hover:bg-white/5 transition-all flex items-center gap-4 group active:scale-98"
               >
-                <div className={`w-14 h-14 ${type.color} rounded-xl flex items-center justify-center text-3xl shadow-lg group-hover:scale-105 transition-transform`}>
-                  {type.icon}
+                <div className="w-11 h-11 bg-ink-800 border border-white/10 rounded-field flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                  <type.Icon className={`w-5 h-5 ${type.iconColor}`} />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="font-bold text-slate-100 group-hover:text-orange-400 transition-colors">{type.label}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{type.description}</p>
+                  <p className="font-bold text-zinc-100 group-hover:text-led-300 transition-colors">{type.label}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">{type.description}</p>
                 </div>
-                <div className="text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all">
-                  →
-                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-led-400 group-hover:translate-x-1 transition-all shrink-0" />
               </button>
             ))}
           </div>
@@ -229,35 +231,44 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
           <div className="p-6 space-y-4">
             <button
               onClick={() => setSelectedType(null)}
-              className="text-orange-400 hover:text-orange-300 flex items-center gap-2 font-semibold transition-colors"
+              className="text-led-400 hover:text-led-300 flex items-center gap-2 font-semibold transition-colors text-sm"
             >
-              {language === 'es' ? '← Volver' : '← Back'}
+              <ArrowLeft className="w-4 h-4" />
+              {language === 'es' ? 'Volver' : 'Back'}
             </button>
 
-            <div className="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-4">
+            <div className="bg-white/[0.03] p-6 rounded-card border border-white/10 space-y-4">
               <div className="flex items-center gap-4">
-                <div className={`w-16 h-16 ${reportTypes.find(r => r.id === selectedType)?.color} rounded-2xl flex items-center justify-center text-4xl shadow-lg`}>
-                  {reportTypes.find(r => r.id === selectedType)?.icon}
-                </div>
-                <div>
-                  <p className="font-bold text-xl text-slate-100">{reportTypes.find(r => r.id === selectedType)?.label}</p>
-                  <p className="text-sm text-slate-400">{reportTypes.find(r => r.id === selectedType)?.description}</p>
-                </div>
+                {(() => {
+                  const type = reportTypes.find(r => r.id === selectedType);
+                  if (!type) return null;
+                  return (
+                    <>
+                      <div className="w-14 h-14 bg-ink-800 border border-white/10 rounded-card flex items-center justify-center shrink-0">
+                        <type.Icon className={`w-7 h-7 ${type.iconColor}`} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-xl text-zinc-100 tracking-tight">{type.label}</p>
+                        <p className="text-sm text-zinc-400">{type.description}</p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Selección de línea (la ubicación sale del GPS real) */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <label className="block text-2xs font-bold text-zinc-400 uppercase tracking-wider">
                   {t('report_which_line')}
                 </label>
                 <div className="grid grid-cols-5 gap-2">
                   {LINEAS_BASE.map((l) => (
                     <button
                       key={l.linea}
-                      onClick={() => setLinea(l.linea)}
-                      className={`p-2.5 rounded-xl font-black text-base transition-all active:scale-95 ${linea === l.linea
-                        ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)] border border-orange-400/40'
-                        : 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10'
+                      onClick={() => { setLinea(l.linea); setLineaError(false); }}
+                      className={`p-2.5 rounded-field font-bold font-mono text-base transition-all active:scale-98 ${linea === l.linea
+                        ? 'bg-led-500 text-ink-950'
+                        : 'bg-ink-800 text-zinc-300 border border-white/10 hover:bg-ink-700'
                         }`}
                     >
                       {l.linea}
@@ -267,10 +278,13 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
                 <input
                   type="text"
                   value={linea}
-                  onChange={(e) => setLinea(e.target.value)}
+                  onChange={(e) => { setLinea(e.target.value); setLineaError(false); }}
                   placeholder={language === 'es' ? 'U otra línea (ej: 39)' : 'Or another line (e.g. 39)'}
-                  className="w-full px-4 py-2.5 text-center font-bold glass-input border border-slate-700/50 bg-slate-900/50 text-slate-100 rounded-xl focus:border-orange-500 focus:outline-none placeholder-slate-500"
+                  className={`w-full px-4 py-2.5 text-center font-bold font-mono glass-input placeholder-zinc-500 ${lineaError ? '!border-danger/60' : ''}`}
                 />
+                {lineaError && (
+                  <p className="text-2xs text-danger font-medium">{t('report_need_line')}</p>
+                )}
               </div>
 
               <textarea
@@ -278,18 +292,18 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
                 onChange={(e) => setComentario(e.target.value)}
                 maxLength={280}
                 placeholder={language === 'es' ? 'Agregá detalles sobre el incidente...' : 'Add details about the incident...'}
-                className="w-full p-4 rounded-xl bg-obsidian-dark border border-slate-700/80 focus:border-orange-500 text-slate-100 focus:outline-none resize-none placeholder-slate-500 transition-colors"
+                className="w-full p-4 glass-input resize-none placeholder-zinc-500"
                 rows={3}
               />
             </div>
 
-            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex items-start gap-3">
-              <div className="text-2xl">💡</div>
+            <div className="bg-led-400/[0.06] border border-led-500/20 rounded-field p-4 flex items-start gap-3">
+              <Info className="w-5 h-5 text-led-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-indigo-300">
+                <p className="text-sm font-bold text-led-300">
                   {language === 'es' ? 'Tip de la comunidad' : 'Community tip'}
                 </p>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                   {language === 'es'
                     ? 'Tu reporte se publica con tu ubicación actual. Cuanto más específico seas, más útil será para otros pasajeros de la línea.'
                     : 'Your report is published with your current location. The more specific you are, the more helpful it will be for other riders.'}
@@ -297,23 +311,25 @@ export const WazeReportButton: React.FC<WazeReportButtonProps> = ({ onReportCrea
               </div>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              fullWidth
               onClick={handleSubmitReport}
-              disabled={isSubmitting || !linea.trim()}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-lg shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_4px_20px_rgba(249,115,22,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-white/10 hover:brightness-110"
+              disabled={isSubmitting}
+              className="py-4 text-lg"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  <LoaderCircle className="w-5 h-5 animate-spin" />
                   {language === 'es' ? 'Enviando...' : 'Submitting...'}
                 </>
               ) : (
                 <>
-                  <ThumbsUp className="w-5 h-5" />
+                  <Send className="w-5 h-5" />
                   {language === 'es' ? 'Enviar Reporte' : 'Submit Report'}
                 </>
               )}
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -86,9 +86,9 @@ const getTileConfig = (): TileConfig => {
     }
 };
 
-// Configuración de CartoDB Voyager (Gratuito, alto rendimiento por CDN y estética premium)
+// CartoDB Dark Matter (gratuito, CDN, dark nativo — sin filtros CSS encima)
 const getOpenStreetMapConfig = (): TileConfig => ({
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 19,
     subdomains: ['a', 'b', 'c', 'd']

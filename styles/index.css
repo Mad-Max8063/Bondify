@@ -5,7 +5,8 @@
 body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
-  background-color: #0F172A; /* Obsidian by default */
+  background-color: #09090B; /* ink-950 */
+  font-family: 'Outfit Variable', system-ui, -apple-system, sans-serif;
 }
 
 .h-dynamic {
@@ -17,79 +18,89 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
-/* Leaflet overrides to match design */
+/* ---- Leaflet: limpieza + tema dark (tiles dark_all nativos, sin filtros) ---- */
 .leaflet-div-icon {
   background: transparent;
   border: none;
 }
 
-/* Leaflet Dark Theme Filter to WOW user */
 .leaflet-container {
-  background: #0F172A !important;
-}
-.leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  background: #09090B !important;
 }
 
-/* Luminous Tech Glassmorphism Styles */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #101013;
+  color: #F4F4F5;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+}
+.leaflet-popup-content {
+  margin: 10px 12px;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: #71717A;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(16, 16, 19, 0.85) !important;
+  color: #A1A1AA !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.leaflet-control-attribution {
+  background: rgba(9, 9, 11, 0.6) !important;
+  color: #52525B !important;
+}
+.leaflet-control-attribution a {
+  color: #71717A !important;
+}
+
+/* ---- Liquid glass (borde interior 1px, sin glow) ---- */
 .glass-card {
-  background: rgba(30, 41, 59, 0.65);
+  background: rgba(16, 16, 19, 0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .glass-nav {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(9, 9, 11, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 -8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* Neon Glow borders */
-.glow-green {
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
-  border-color: rgba(16, 185, 129, 0.4) !important;
-}
-.glow-amber {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
-  border-color: rgba(245, 158, 11, 0.4) !important;
-}
-.glow-red {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.4) !important;
-}
-
-/* Glass Inputs */
 .glass-input {
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(23, 23, 27, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #F8FAFC;
+  color: #F4F4F5;
   border-radius: 0.75rem;
   outline: none;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-input:focus {
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+  border-color: rgba(228, 172, 85, 0.5); /* led-400 */
 }
 
 /* Scrollbar fino para los modales con overflow */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  scrollbar-color: rgba(161, 161, 170, 0.3) transparent;
 }
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(161, 161, 170, 0.3);
   border-radius: 3px;
 }
 
-/* Colectivo custom animations */
+/* ---- Colectivo: animaciones del SVG de marca ---- */
 @keyframes colectivo-bounce {
   0%, 100% {
     transform: translateY(0) rotate(0deg);

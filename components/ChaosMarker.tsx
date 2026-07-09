@@ -1,5 +1,6 @@
 import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
+import { ThumbsUp, Frown, Angry, HeartHandshake } from 'lucide-react';
 import { ChaosReport } from '../types';
 import { createChaosIcon } from '../utils/leafletIcons';
 
@@ -7,17 +8,23 @@ interface ChaosMarkerProps {
   report: ChaosReport;
 }
 
-const EMOJI_OPTIONS = ['👍', '😢', '😡', '🫡'];
+// Las keys se conservan (son las que pueden venir en report.reactions)
+const REACTION_OPTIONS = [
+  { key: '👍', Icon: ThumbsUp, label: 'Gracias' },
+  { key: '😢', Icon: Frown, label: 'Qué bajón' },
+  { key: '😡', Icon: Angry, label: 'Bronca' },
+  { key: '🫡', Icon: HeartHandshake, label: 'Aguante' },
+];
 
 export const ChaosMarker: React.FC<ChaosMarkerProps> = ({ report }) => {
   const [reactions, setReactions] = React.useState<{ [key: string]: number }>(report.reactions || {});
 
-  const handleReact = (emoji: string) => {
+  const handleReact = (key: string) => {
     setReactions(prev => {
-      const currentCount = prev[emoji] || 0;
+      const currentCount = prev[key] || 0;
       return {
         ...prev,
-        [emoji]: currentCount + 1
+        [key]: currentCount + 1
       };
     });
   };
@@ -41,21 +48,22 @@ export const ChaosMarker: React.FC<ChaosMarkerProps> = ({ report }) => {
     >
       <Popup className="rounded-xl overflow-hidden">
         <div className="p-1 min-w-[150px]">
-          <h4 className="font-bold text-slate-800 text-sm mb-1">{getTitle(report.type)}</h4>
-          <p className="text-xs text-slate-500 mb-3">
-            Reportado hace {Math.floor((Date.now() - report.timestamp) / 60000)} min
+          <h4 className="font-bold text-zinc-100 text-sm mb-1">{getTitle(report.type)}</h4>
+          <p className="text-xs text-zinc-500 mb-3 font-mono">
+            hace {Math.floor((Date.now() - report.timestamp) / 60000)} min
           </p>
 
-          <div className="flex gap-1 justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
-            {EMOJI_OPTIONS.map(emoji => (
+          <div className="flex gap-1 justify-between bg-ink-800 p-2 rounded-lg border border-white/5">
+            {REACTION_OPTIONS.map(({ key, Icon, label }) => (
               <button
-                key={emoji}
-                onClick={() => handleReact(emoji)}
-                className="flex flex-col items-center hover:scale-110 transition-transform active:scale-90"
+                key={key}
+                onClick={() => handleReact(key)}
+                aria-label={label}
+                className="flex flex-col items-center gap-0.5 hover:scale-110 transition-transform active:scale-90 text-zinc-400 hover:text-led-300"
               >
-                <span className="text-lg">{emoji}</span>
-                <span className="text-[10px] font-bold text-slate-400">
-                  {reactions[emoji] || 0}
+                <Icon size={16} strokeWidth={2} />
+                <span className="text-2xs font-bold font-mono text-zinc-500">
+                  {reactions[key] || 0}
                 </span>
               </button>
             ))}

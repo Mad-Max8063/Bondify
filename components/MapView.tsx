@@ -57,7 +57,6 @@ function MapEventListener({ onReady }: { onReady?: (map: L.Map) => void }) {
     // Forzar redimensionamiento al montar para solucionar el bug del mapa cortado a la mitad
     const timer = setTimeout(() => {
       map.invalidateSize();
-      console.log('🗺️ Leaflet: invalidateSize ejecutado para corregir dimensiones.');
     }, 200);
 
     return () => clearTimeout(timer);
@@ -71,12 +70,11 @@ export const MapView: React.FC<MapViewProps> = ({ buses, reports, onBusClick, se
 
   return (
     <div className="w-full h-full absolute inset-0 z-0">
-      {/* Fondo con gradiente mientras cargan los tiles */}
+      {/* Fondo oscuro mientras cargan los tiles */}
       <div
         className="absolute inset-0 z-0"
         style={{
-          background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%)',
-          opacity: 0.3
+          background: 'radial-gradient(circle at 50% 40%, #17171B 0%, #09090B 70%)'
         }}
       />
 

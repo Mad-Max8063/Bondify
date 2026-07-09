@@ -57,6 +57,7 @@ type TranslationKeys =
   | 'nudge_confirm'
   | 'nudge_deny'
   | 'map_search_placeholder'
+  | 'map_help_title'
   | 'map_status_verified'
   | 'map_status_estimated'
   | 'map_status_trail'
@@ -224,6 +225,7 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     nudge_confirm: '¡SÍ, SUBÍ! 🚌',
     nudge_deny: 'Ahora no',
     map_search_placeholder: 'Buscar parada o línea de colectivo...',
+    map_help_title: 'Guía de uso',
     map_status_verified: 'VERIFICADO',
     map_status_estimated: 'ESTIMADO',
     map_status_trail: 'RECORRIDO',
@@ -390,6 +392,7 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     nudge_confirm: 'YES, BOARDED! 🚌',
     nudge_deny: 'Not now',
     map_search_placeholder: 'Search bus stop or line number...',
+    map_help_title: 'User guide',
     map_status_verified: 'LIVE VERIFIED',
     map_status_estimated: 'SCHEDULED',
     map_status_trail: 'RECENT TRAIL',
