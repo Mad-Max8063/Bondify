@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -62,18 +62,25 @@ app.use(cookieParser());
 // Sesión anónima firmada: adjunta req.userId a todo /api
 app.use('/api', sessionMiddleware);
 
-// Rate limiting
+// Rate limiting.
+// Render corre detrás de Cloudflare: req.ip con trust proxy termina siendo el
+// edge de CF (rota por request y rompe el conteo). CF-Connecting-IP trae la IP
+// real del cliente y Cloudflare la sobreescribe siempre (no es spoofeable).
+const clientIpKey = (req) => ipKeyGenerator(req.headers['cf-connecting-ip'] || req.ip);
+
 const globalLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   limit: 300,
   standardHeaders: 'draft-7',
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: clientIpKey
 });
 const strictLimiter = (limit) => rateLimit({
   windowMs: 60 * 1000,
   limit,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  keyGenerator: clientIpKey,
   message: { error: 'Demasiadas solicitudes, esperá un momento.' }
 });
 
