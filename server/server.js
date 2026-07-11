@@ -86,6 +86,9 @@ const strictLimiter = (limit) => rateLimit({
 
 app.use('/api', globalLimiter);
 app.use('/api/bondi/reportar', strictLimiter(5));
+// Anti-spoofing: el cliente legítimo pinguea cada 10s (6/min); margen ×2.
+app.use('/api/bondi/ping', strictLimiter(12));
+app.use('/api/estado/registrar-usuario', strictLimiter(6));
 app.use('/api/reportes/crear', strictLimiter(4));
 app.use('/api/reportes/confirmar', strictLimiter(20));
 app.use('/api/reportes/validar', strictLimiter(20));

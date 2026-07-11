@@ -1,15 +1,51 @@
 import express from 'express';
 import { db, admin } from '../firebase.js';
 import { analizarIncidente } from '../services/geminiService.js';
+import {
+  CONFIG as PLAUSIBILITY,
+  LINEA_REGEX,
+  isInAmba,
+  distanciaMetros,
+  saltoPlausible,
+  evaluarPing
+} from '../services/plausibility.js';
 
 const router = express.Router();
 
 // Referencia a la colección de bondis
 const bondisRef = db.collection('colectivos');
 
+const clamp = (n, min, max) => Math.min(max, Math.max(min, Number(n) || 0));
+
+// Normaliza ultimaActualizacion: Timestamp de Firestore real o ISO/Date del mock
+const tsToDate = (v) => (v?.toDate ? v.toDate() : (v ? new Date(v) : null));
+
+// Serialización por WHITELIST: usuariosActivos es un array de UUIDs de sesión
+// y NUNCA debe salir al cliente (solo su length como pasajerosCount).
+function serializarColectivo(doc) {
+  const d = doc.data() || {};
+  return {
+    id: doc.id,
+    linea: d.linea,
+    ramal: d.ramal,
+    ubicacion: d.ubicacion,
+    velocidad: d.velocidad,
+    rumbo: d.rumbo,
+    esVerificado: !!d.esVerificado,
+    esEstimado: !!d.esEstimado,
+    reportes: d.reportes || [],
+    ultimaActualizacion: tsToDate(d.ultimaActualizacion),
+    pasajerosCount: Array.isArray(d.usuariosActivos) ? d.usuariosActivos.length : 0
+  };
+}
+
 // 📍 RUTA 1: El "Viajero" envía su ping (GPS)
+// Anti-spoofing: "verificado" ya no se regala con un ping — exige una
+// trayectoria plausible sostenida de la MISMA sesión (motor de plausibilidad,
+// en memoria) Y haber "subido" a la línea (usuariosActivos).
 router.post('/ping', async (req, res) => {
   const { linea, lat, lng, velocidad, rumbo } = req.body;
+  const userId = req.userId;
 
   // Validación de campos requeridos
   if (!linea || lat === undefined || lng === undefined) {
@@ -19,6 +55,10 @@ router.post('/ping', async (req, res) => {
     });
   }
 
+  if (!LINEA_REGEX.test(String(linea))) {
+    return res.status(400).json({ error: 'Línea inválida' });
+  }
+
   // Validar coordenadas
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
@@ -26,20 +66,57 @@ router.post('/ping', async (req, res) => {
     return res.status(400).json({ error: 'Coordenadas inválidas' });
   }
 
-  try {
-    // En Firestore, usamos la línea como ID del documento. 
-    // Si existe, lo actualiza (merge). Si no, lo crea.
-    // .doc("152") -> crea/busca el documento con ID "152"
-    await bondisRef.doc(String(linea)).set({
-      linea, // Guardamos la línea también como campo por si acaso
-      ubicacion: { lat: latNum, lng: lngNum },
-      velocidad: velocidad || 0,
-      rumbo: rumbo || 0,
-      esVerificado: true,
-      ultimaActualizacion: admin.firestore.FieldValue.serverTimestamp() // Hora del servidor Google
-    }, { merge: true }); // 'merge: true' es clave para no borrar otros campos (como los reportes)
+  // Solo aceptamos posiciones dentro de la zona de cobertura (AMBA)
+  if (!isInAmba(latNum, lngNum)) {
+    return res.status(422).json({ error: 'Fuera de la zona de cobertura' });
+  }
 
-    res.json({ status: 'ok', mensaje: `Línea ${linea} actualizada` });
+  // Telemetría saneada (informativa, nunca se usa para confiar)
+  const vel = clamp(velocidad, 0, 40);
+  const rumboNum = clamp(rumbo, 0, 360);
+
+  // Plausibilidad de la trayectoria de esta sesión (teleport = probation perdida)
+  const evaluacion = evaluarPing({ userId, linea: String(linea), lat: latNum, lng: lngNum });
+  if (!evaluacion.ok) {
+    return res.status(422).json({ error: 'Trayectoria implausible' });
+  }
+
+  try {
+    const docSnap = await bondisRef.doc(String(linea)).get();
+    const data = docSnap.exists ? (docSnap.data() || {}) : {};
+
+    // Teleport-check ACOTADO contra el doc: solo protege una posición ya
+    // verificada y fresca (que un ping anónimo no pueda teletransportar un
+    // bus verde). Un doc sin verificar o viejo no puede bloquear a nadie
+    // (evita que un atacante "ancle" la línea y censure al pasajero real).
+    if (data.esVerificado === true && data.ubicacion) {
+      const prevTs = tsToDate(data.ultimaActualizacion);
+      const dtMs = prevTs ? Date.now() - prevTs.getTime() : Infinity;
+      if (dtMs < PLAUSIBILITY.DOC_FRESCO_MS) {
+        const dist = distanciaMetros(data.ubicacion.lat, data.ubicacion.lng, latNum, lngNum);
+        if (!saltoPlausible(dist, dtMs)) {
+          return res.status(422).json({ error: 'Posición inconsistente con el estado actual de la línea' });
+        }
+      }
+    }
+
+    // Verificado = trayectoria graduada + figura como pasajero activo (subir).
+    // La comparación usa req.userId SOLO en memoria: jamás se persiste el
+    // userId junto a la posición.
+    const activos = Array.isArray(data.usuariosActivos) ? data.usuariosActivos : [];
+    const esVerificado = evaluacion.graduado && activos.includes(userId);
+
+    await bondisRef.doc(String(linea)).set({
+      linea,
+      ubicacion: { lat: latNum, lng: lngNum },
+      velocidad: vel,
+      rumbo: rumboNum,
+      esVerificado,
+      esEstimado: false,
+      ultimaActualizacion: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    res.json({ status: 'ok', mensaje: `Línea ${linea} actualizada`, verificado: esVerificado });
   } catch (error) {
     console.error("Error en Firebase:", error);
     res.status(500).json({ error: 'Error actualizando GPS' });
@@ -113,11 +190,7 @@ router.get('/', async (req, res) => {
 
     const bondis = [];
     snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.ultimaActualizacion && data.ultimaActualizacion.toDate) {
-        data.ultimaActualizacion = data.ultimaActualizacion.toDate();
-      }
-      bondis.push({ id: doc.id, ...data });
+      bondis.push(serializarColectivo(doc));
     });
 
     res.json({ status: 'ok', colectivos: bondis });
@@ -135,11 +208,7 @@ router.get('/activos', async (req, res) => {
     const snapshot = await bondisRef.where('ultimaActualizacion', '>', hace5Minutos).get();
     const bondis = [];
     snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.ultimaActualizacion && data.ultimaActualizacion.toDate) {
-        data.ultimaActualizacion = data.ultimaActualizacion.toDate();
-      }
-      bondis.push({ id: doc.id, ...data });
+      bondis.push(serializarColectivo(doc));
     });
     res.json({ status: 'ok', colectivos: bondis });
   } catch (e) {
@@ -162,9 +231,7 @@ router.get('/linea/:linea', async (req, res) => {
 
     const bondis = [];
     snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.ultimaActualizacion && data.ultimaActualizacion.toDate) data.ultimaActualizacion = data.ultimaActualizacion.toDate();
-      bondis.push({ id: doc.id, ...data });
+      bondis.push(serializarColectivo(doc));
     });
     res.json({ status: 'ok', colectivos: bondis });
   } catch (e) {
