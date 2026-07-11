@@ -61,6 +61,9 @@ type TranslationKeys =
   | 'map_status_verified'
   | 'map_status_estimated'
   | 'map_status_trail'
+  | 'map_updated_ago'
+  | 'map_trail_desc'
+  | 'map_safety_note'
   | 'map_status_problem'
   | 'map_status_ghost'
   | 'map_card_passengers'
@@ -230,6 +233,9 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     map_status_verified: 'VERIFICADO',
     map_status_estimated: 'ESTIMADO',
     map_status_trail: 'RECORRIDO',
+    map_updated_ago: 'Actualizado hace {time}',
+    map_trail_desc: 'Señal reciente sin verificar. Alguien compartió esta posición pero todavía no pasó la validación del servidor.',
+    map_safety_note: 'Usala como referencia: esperá siempre en la parada, en un lugar iluminado.',
     map_status_problem: 'DEMORA/ALERTA',
     map_status_ghost: 'GHOST BUS',
     map_card_passengers: 'Pasajeros a bordo',
@@ -398,6 +404,9 @@ const translations: Record<Language, Record<TranslationKeys, string>> = {
     map_status_verified: 'LIVE VERIFIED',
     map_status_estimated: 'SCHEDULED',
     map_status_trail: 'RECENT TRAIL',
+    map_updated_ago: 'Updated {time} ago',
+    map_trail_desc: 'Recent unverified signal. Someone shared this position but it has not passed server validation yet.',
+    map_safety_note: 'Use it as a reference: always wait at the stop, in a well-lit spot.',
     map_status_problem: 'DELAYS / ALERT',
     map_status_ghost: 'GHOST BUS',
     map_card_passengers: 'Passengers on board',

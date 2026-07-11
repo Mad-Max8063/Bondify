@@ -35,6 +35,12 @@ const TIPO_TO_REPORT_TYPE: Record<string, ReportType> = {
 // Velocidad mínima asumida para estimar arribo (promedio colectivo CABA)
 const MIN_SPEED_KMH = 17;
 
+// Frescura del dato: "32 s" / "3 min"
+const formatAge = (lastUpdate: number): string => {
+    const seg = Math.max(0, Math.round((Date.now() - lastUpdate) / 1000));
+    return seg < 60 ? `${seg} s` : `${Math.round(seg / 60)} min`;
+};
+
 export const MapInterface: React.FC<MapInterfaceProps> = ({
     userRole,
     onAddPoints,
@@ -289,6 +295,11 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({
                                         <Shield size={10} /> {t('map_status_verified')}
                                     </span>
                                 )}
+                                {selectedBus.status === BusStatus.TRAIL && (
+                                    <span className="bg-led-400/15 text-led-300 text-2xs font-bold px-2 py-1 rounded-lg">
+                                        {t('map_status_trail')}
+                                    </span>
+                                )}
                                 {(selectedBus.status === BusStatus.GHOST || selectedBus.status === BusStatus.ESTIMATED) && (
                                     <span className="bg-ink-800 text-zinc-400 text-2xs font-bold px-2 py-1 rounded-lg">
                                         {language === 'es' ? 'Estimado' : 'Estimated'}
@@ -302,6 +313,9 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({
                             </div>
                             <p className="text-zinc-400 text-sm mt-0.5">
                                 {language === 'es' ? `Hacia ${selectedBus.destination}` : `To ${selectedBus.destination}`}
+                            </p>
+                            <p className="text-2xs text-zinc-500 font-mono mt-0.5">
+                                {t('map_updated_ago').replace('{time}', formatAge(selectedBus.lastUpdate))}
                             </p>
                         </div>
                         <div className="text-right mr-6">
@@ -321,8 +335,26 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({
                             <div className="bg-ok/20 p-2 rounded-lg">
                                 <Users className="w-4 h-4 text-ok" />
                             </div>
+                            <div>
+                                <p className="text-xs text-zinc-300 font-medium">
+                                    <strong className="text-ok">
+                                        {selectedBus.passengers > 0
+                                            ? (language === 'es' ? `${selectedBus.passengers} a bordo` : `${selectedBus.passengers} on board`)
+                                            : (language === 'es' ? 'Usuarios a bordo' : 'Users on board')}
+                                    </strong> {language === 'es' ? 'compartiendo ubicación en vivo.' : 'sharing live location details.'}
+                                </p>
+                                <p className="text-2xs text-zinc-500 mt-1">{t('map_safety_note')}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedBus.status === BusStatus.TRAIL && (
+                        <div className="bg-led-400/10 border border-led-500/15 rounded-field p-3 mb-4 flex items-center gap-3">
+                            <div className="bg-led-400/20 p-2 rounded-lg">
+                                <Shield className="w-4 h-4 text-led-400" />
+                            </div>
                             <p className="text-xs text-zinc-300 font-medium">
-                                <strong className="text-ok">{language === 'es' ? 'Usuarios a bordo' : 'Users on board'}</strong> {language === 'es' ? 'compartiendo ubicación en vivo.' : 'sharing live location details.'}
+                                {t('map_trail_desc')}
                             </p>
                         </div>
                     )}
@@ -443,8 +475,8 @@ export const MapInterface: React.FC<MapInterfaceProps> = ({
                                             <p className="font-bold text-zinc-200">{language === 'es' ? 'VERIFICADO (En Vivo)' : 'VERIFIED (Live)'}</p>
                                             <p className="text-zinc-400 text-[11px] mt-0.5">
                                                 {language === 'es'
-                                                    ? '¡Ubicación 100% real! Pasajeros activos a bordo comparten su viaje de forma anónima.'
-                                                    : '100% real position! Active riders on board are anonymously broadcasting the bus details.'}
+                                                    ? 'Posición compartida en vivo por pasajeros anónimos y validada por el servidor (trayectoria y velocidad plausibles).'
+                                                    : 'Live position shared by anonymous riders, server-validated (plausible trajectory and speed).'}
                                             </p>
                                         </div>
                                     </div>

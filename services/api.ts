@@ -25,7 +25,8 @@ const apiClient = axios.create({
  * Interfaz para colectivo desde el backend
  */
 interface ColectivoBackend {
-  _id: string;
+  id?: string;
+  _id?: string; // compat con respuestas viejas
   linea: string;
   ramal: string;
   ubicacion: {
@@ -36,6 +37,7 @@ interface ColectivoBackend {
   velocidad: number;
   esVerificado: boolean;
   esEstimado?: boolean; // Optional flag for estimated position
+  pasajerosCount?: number; // cantidad real de pasajeros activos (server)
   reportes: Array<{
     tipo: string;
     texto?: string;
@@ -78,13 +80,14 @@ function convertirColectivoABus(colectivo: ColectivoBackend): BusEntity {
   }
 
   return {
-    id: colectivo._id,
+    // El backend manda `id` (docId); `_id` queda por compat
+    id: colectivo.id ?? colectivo._id ?? colectivo.linea,
     line: `${colectivo.linea}${colectivo.ramal !== 'default' ? ` (${colectivo.ramal})` : ''}`,
     status,
     lat: colectivo.ubicacion.lat,
     lng: colectivo.ubicacion.lng,
     heading: colectivo.rumbo || 0,
-    passengers: colectivo.esVerificado ? 1 : 0,
+    passengers: colectivo.pasajerosCount ?? 0,
     lastUpdate: new Date(colectivo.ultimaActualizacion).getTime(),
     destination: colectivo.ramal !== 'default' ? colectivo.ramal : 'Centro',
     arrivalEstimate: Math.round(Math.random() * 15) + 1, // Estimación placeholder
