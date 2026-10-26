@@ -135,6 +135,12 @@ app.get(/(.*)/, (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  // Errores del cliente (body-parser: 400, 413, 415…) mantienen su código.
+  const status = Number(err.status ?? err.statusCode);
+  if (status >= 400 && status < 500) {
+    console.warn(`Solicitud rechazada (${status}): ${err.type || err.message}`);
+    return res.status(status).json({ error: 'Solicitud inválida' });
+  }
   console.error('Error:', err);
   res.status(500).json({
     error: 'Error interno del servidor',
