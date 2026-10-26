@@ -56,7 +56,8 @@ app.use(cors({
   origin: corsOrigins,
   credentials: true
 }));
-app.use(express.json({ limit: '50kb' }));
+// inflate: false rechaza cuerpos comprimidos (CVE-2026-111497, Brotli de Node).
+app.use(express.json({ limit: '50kb', inflate: false }));
 app.use(cookieParser());
 
 // Sesión anónima firmada: adjunta req.userId a todo /api
